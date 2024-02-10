@@ -109,7 +109,6 @@ if(NOT lib_Mayaqua AND NOT lib_Cedar AND NOT lib_Hamcore AND NOT lib_Softethervp
     find_library(lib_Cedar cedar)
 endif()
 
-message(FATAL_ERROR "")
 #Keep it so Android Studio copies libraries automatically to APK's jniLibs
 add_library(${CMAKE_PROJECT_NAME} SHARED
         libexecvpnclient.cpp)
