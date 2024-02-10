@@ -1,4 +1,10 @@
  ```bash
+ (cd deps;
+    bash download.sh
+    bash hamcorebuilder.sh
+    cd external;
+    git apply ../../softether.patch
+ )
  /var/home/$USER/Android/Sdk/cmake/3.22.1/bin/cmake \
       -H/var/home/$USER/AndroidStudioProjects/SimpleVPN/libexecvpnclient/src/main/cpp \
       -DCMAKE_SYSTEM_NAME=Android \
