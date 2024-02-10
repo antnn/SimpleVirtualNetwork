@@ -18,6 +18,7 @@ import java.io.InputStreamReader
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        var hello =""
         val m = Thread {
             val nativeLibsPath = applicationInfo.nativeLibraryDir
             val pb = ProcessBuilder("$nativeLibsPath/libsoftethervpnclient.so")
@@ -37,7 +38,7 @@ class MainActivity : ComponentActivity() {
                 val reader = BufferedReader(InputStreamReader(process.inputStream))
                 var line: String?
                 while (reader.readLine().also { line = it } != null) {
-                    println("stdout: $line")
+                    hello += line
                 }
             }
 //CANNOT LINK EXECUTABLE "/data/app/~~bTHffYMEOntsj-hvg_Frkg==/ru.valishin.VPN_over_HTTP-vELIlbR40D-pHohGtBcOAQ==/lib/arm64/libexecvpnclient.so": library "libncurses.so.6" not found: needed by main executable
@@ -72,7 +73,7 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    Greeting("Android")
+                    Greeting(hello)
                 }
             }
         }
