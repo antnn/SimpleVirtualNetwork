@@ -6,7 +6,11 @@ plugins {
 android {
     namespace = "ru.valishin.simplevpn"
     compileSdk = 34
-
+    packaging {
+        jniLibs {
+            useLegacyPackaging = true
+        }
+    }
     defaultConfig {
         applicationId = "ru.valishin.simplevpn"
         minSdk = 24

@@ -6,6 +6,11 @@ plugins {
 android {
     namespace = "ru.valishin.libexecvpnclient"
     compileSdk = 34
+    packaging {
+        jniLibs {
+            useLegacyPackaging = true
+        }
+    }
 
     defaultConfig {
         minSdk = 24
