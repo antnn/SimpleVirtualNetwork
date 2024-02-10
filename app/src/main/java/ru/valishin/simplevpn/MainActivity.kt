@@ -20,8 +20,8 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         val m = Thread {
             val nativeLibsPath = applicationInfo.nativeLibraryDir
-            val pb = ProcessBuilder("$nativeLibsPath/libexecvpnclient.so")
-            val f = File("$nativeLibsPath/libexecvpnclient.so")
+            val pb = ProcessBuilder("$nativeLibsPath/libsoftethervpnclient.so")
+            val f = File("$nativeLibsPath/libsoftethervpnclient.so")
             val env = pb.environment()
             val tmp = "$cacheDir/se_tmp"
             env["SE_TMPDIR"] = tmp
