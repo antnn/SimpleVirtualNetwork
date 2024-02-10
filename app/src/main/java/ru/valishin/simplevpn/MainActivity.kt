@@ -29,7 +29,8 @@ class MainActivity : ComponentActivity() {
             env["SE_DBDIR"] = "$filesDir/se_db"
 
             env["LD_LIBRARY_PATH"] = nativeLibsPath
-            env["LD_PRELOAD"] = "$nativeLibsPath/libncurses.so:$nativeLibsPath/libreadline.so"
+            env["LD_PRELOAD"] = "$nativeLibsPath/libncurses.so:" +
+                    "$nativeLibsPath/libreadline.so:$nativeLibsPath/libform.so"
             val process = pb.start()
 
             val stdoutThread = Thread {
