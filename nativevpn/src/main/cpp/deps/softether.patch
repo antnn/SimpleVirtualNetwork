@@ -1,0 +1,472 @@
+diff --git a/src/CMakeLists.txt b/src/CMakeLists.txt
+index 0b472cf..1cff9bc 100644
+--- a/src/CMakeLists.txt
++++ b/src/CMakeLists.txt
+@@ -156,17 +156,17 @@ add_subdirectory(libhamcore)
+ # hamcorebuilder utility
+ add_subdirectory(hamcorebuilder)
+
+-# hamcore.se2 archive file
++# hamcore archive file
+ add_custom_target(hamcore-archive-build
+   ALL
+-  DEPENDS "${BUILD_DIRECTORY}/hamcore.se2"
++  DEPENDS "${BUILD_DIRECTORY}/hamcore.se2.so"
+ )
+
+ add_custom_command(
+-  COMMENT "Building hamcore.se2 archive file..."
+-  COMMAND hamcorebuilder "hamcore.se2" "${TOP_DIRECTORY}/src/bin/hamcore"
++  COMMENT "Building hamcore.se2.so archive file..."
++  COMMAND hamcorebuilder "hamcore.se2.so" "${TOP_DIRECTORY}/src/bin/hamcore"
+   DEPENDS hamcorebuilder "${TOP_DIRECTORY}/src/bin/hamcore/"
+-  OUTPUT "${BUILD_DIRECTORY}/hamcore.se2"
++  OUTPUT "${BUILD_DIRECTORY}/hamcore.se2.so"
+   WORKING_DIRECTORY "${BUILD_DIRECTORY}"
+   VERBATIM
+ )
+diff --git a/src/Cedar/CMakeLists.txt b/src/Cedar/CMakeLists.txt
+index 1845c3c..8d379ed 100644
+--- a/src/Cedar/CMakeLists.txt
++++ b/src/Cedar/CMakeLists.txt
+@@ -88,10 +88,11 @@ if(WIN32)
+ endif()
+
+ if(UNIX)
+-  find_package(Curses REQUIRED)
+-  find_library(LIB_READLINE readline)
++  #find_package(Curses REQUIRED)
++  #find_library(LIB_READLINE readline)
+
+-  target_link_libraries(cedar PRIVATE ${CURSES_LIBRARIES} ${LIB_READLINE})
++  #target_link_libraries(cedar PRIVATE ${CURSES_LIBRARIES} ${LIB_READLINE})
++  target_link_libraries(cedar PRIVATE )
+
+   if(${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
+     target_link_libraries(cedar PRIVATE mayaqua pcap)
+diff --git a/src/Cedar/Console.c b/src/Cedar/Console.c
+index 45bab42..4b2ab8b 100644
+--- a/src/Cedar/Console.c
++++ b/src/Cedar/Console.c
+@@ -28,8 +28,8 @@
+ #include <termios.h>
+ #include <sys/ioctl.h>
+
+-#include <readline/readline.h>
+-#include <readline/history.h>
++//#include <readline/readline.h>
++//#include <readline/history.h>
+ #endif
+
+ // Display the help for the command
+@@ -2037,7 +2037,8 @@ wchar_t *Prompt(wchar_t *prompt_str)
+ #else	// OS_WIN32
+ 	{
+ 		char *prompt = CopyUniToStr(prompt_str);
+-		char *s = readline(prompt);
++		//char *s = readline(prompt);
++		char *s = NULL;
+ 		Free(prompt);
+
+ 		if (s != NULL)
+@@ -2047,7 +2048,7 @@ wchar_t *Prompt(wchar_t *prompt_str)
+
+ 			if (IsEmptyStr(s) == false)
+ 			{
+-				add_history(s);
++				//add_history(s);
+ 			}
+
+ 			ret = CopyStrToUni(s);
+diff --git a/src/Cedar/SW.c b/src/Cedar/SW.c
+index a953021..6e6edc5 100644
+--- a/src/Cedar/SW.c
++++ b/src/Cedar/SW.c
+@@ -53,7 +53,7 @@ static char *sfx_vpn_server_bridge_files[] =
+ 	"vpnbridge.exe",
+ 	"vpnsmgr.exe",
+ 	"vpncmd.exe",
+-	"hamcore.se2",
++	"hamcore",
+ };
+ static char *sfx_vpn_client_files[] =
+ {
+@@ -63,7 +63,7 @@ static char *sfx_vpn_client_files[] =
+ 	"vpncmd.exe",
+ 	//"vpninstall.exe",
+ 	//"vpnweb.cab",
+ };
+
+ // Global variables to be used out of necessity
+@@ -149,9 +149,9 @@ bool SwCompileSfx(LIST *o, wchar_t *dst_filename)
+ 						StrCpy(inner_name, sizeof(inner_name), f->InnerFileName);
+ 						StrUpper(inner_name);
+
+ 						{
+ 							// Prepend "raw_" to file name
+ 							Format(inner_name, sizeof(inner_name), "raw_%s", f->InnerFileName);
+ 							StrUpper(inner_name);
+@@ -2661,7 +2661,7 @@ void SwDefineTasks(SW *sw, SW_TASK *t, SW_COMPONENT *c)
+ 		tmp2, false));
+
+ 	// Hamcore!
+
+ }
+
+ // Build the Web installer
+@@ -5862,33 +5862,33 @@ void SwDefineComponents(SW *sw)
+ 		"vpnserver.exe",
+ 		"vpnsmgr.exe",
+ 		"vpncmd.exe",
+
+ 	};
+ 	char *vpn_client_files[] =
+ 	{
+ 		"vpnclient.exe",
+ 		"vpncmgr.exe",
+ 		"vpncmd.exe",
+
+ 	};
+ 	char *vpn_bridge_files[] =
+ 	{
+ 		"vpnbridge.exe",
+ 		"vpnsmgr.exe",
+ 		"vpncmd.exe",
+
+ 	};
+ 	char *vpn_smgr_files[] =
+ 	{
+ 		"vpnsmgr.exe",
+ 		"vpncmd.exe",
+
+ 	};
+ 	char *vpn_cmgr_files[] =
+ 	{
+ 		"vpncmgr.exe",
+ 		"vpncmd.exe",
+
+ 	};
+ 	// Validate arguments
+ 	if (sw == NULL)
+diff --git a/src/Mayaqua/FileIO.c b/src/Mayaqua/FileIO.c
+index 7bfe1a6..70088ec 100644
+--- a/src/Mayaqua/FileIO.c
++++ b/src/Mayaqua/FileIO.c
+@@ -19,51 +19,14 @@
+ #include "Win32.h"
+
+ #include <Hamcore.h>
+
++extern char* __attribute__((weak)) GetAndroidDbDir(){
++    return NULL;
+ }
++extern char * __attribute__((weak)) GetAndroidLogDir(){
++    return NULL;
++}
++extern void __attribute__((weak)) AndroidLog(char* message) {}
++
+ static char exe_file_name[MAX_SIZE] = "/tmp/a.out";
+ static wchar_t exe_file_name_w[MAX_SIZE] = L"/tmp/a.out";
+ static LIST *hamcore = NULL;
+@@ -850,7 +813,7 @@ BUF *ReadHamcore(char *name)
+ }
+
+ // Initialization of HamCore file system
+ {
+ 	if (MayaquaIsMinimalMode())
+ 	{
+@@ -869,6 +832,7 @@ void InitHamcore()
+ 	char path[MAX_PATH];
+ 	GetExeDir(path, sizeof(path));
+ 	Format(path, sizeof(path), "%s/%s", path, HAMCORE_FILE_NAME);
++    AndroidLog(path);
+
+ 	hamcore_io = HamcoreOpen(path);
+ 	if (hamcore_io != NULL)
+@@ -920,7 +884,11 @@ void GetExeDir(char *name, UINT size)
+ 	{
+ 		return;
+ 	}
+-
++#ifdef __ANDROID__
++    char *_p = GetAndroidTmpDir();
++    StrCpy(name, size, _p);
++    return;
++#endif
+ 	GetDirNameFromFilePath(name, size, exe_file_name);
+ }
+ void GetExeDirW(wchar_t *name, UINT size)
+@@ -961,7 +929,12 @@ void GetLogDir(char *name, UINT size)
+ #ifdef SE_LOGDIR
+ 	Format(name, size, SE_LOGDIR);
+ #else
+-	GetExeDir(name, size);
++#ifndef __ANDROID__
++    GetExeDir(name, size);
++#else
++    char * _p = GetAndroidLogDir();
++    StrCpy(name, size, _p);
++#endif
+ #endif
+ }
+
+@@ -979,7 +952,12 @@ void GetDbDir(char *name, UINT size)
+ #ifdef SE_DBDIR
+ 	Format(name, size, SE_DBDIR);
+ #else
+-	GetExeDir(name, size);
++#ifndef __ANDROID__
++    GetExeDir(name, size);
++#else
++    char * _p = GetAndroidDbDir();
++    StrCpy(name, size, _p);
++#endif
+ #endif
+ }
+
+@@ -997,7 +975,13 @@ void GetPidDir(char *name, UINT size)
+ #ifdef SE_PIDDIR
+ 	Format(name, size, SE_PIDDIR);
+ #else
+-	GetExeDir(name, size);
++#ifndef __ANDROID__
++    GetExeDir(name, size);
++#else
++    char * _p = GetAndroidTmpDir();
++    StrCpy(name, size, _p);
++#endif
++
+ #endif
+ }
+
+diff --git a/src/Mayaqua/FileIO.h b/src/Mayaqua/FileIO.h
+index 4124309..b7a23f0 100644
+--- a/src/Mayaqua/FileIO.h
++++ b/src/Mayaqua/FileIO.h
+@@ -11,7 +11,7 @@
+ #include "Mayaqua.h"
+
+ #define	HAMCORE_DIR_NAME			"hamcore"
+ #define	HAMCORE_CACHE_EXPIRES		(5 * 60 * 1000)
+
+ // IO structure
+diff --git a/src/Mayaqua/Internat.c b/src/Mayaqua/Internat.c
+index 097b2a2..85e095d 100644
+--- a/src/Mayaqua/Internat.c
++++ b/src/Mayaqua/Internat.c
+@@ -2595,7 +2595,11 @@ void UniPrintStr(wchar_t *string)
+
+ 		if (str != NULL)
+ 		{
++#ifdef __ANDROID__
++            AndroidLog(str);
++#else
+ 			fputs(str, stdout);
++#endif
+ 		}
+ 		else
+ 		{
+diff --git a/src/Mayaqua/Mayaqua.c b/src/Mayaqua/Mayaqua.c
+index a805965..b32b71a 100644
+--- a/src/Mayaqua/Mayaqua.c
++++ b/src/Mayaqua/Mayaqua.c
+@@ -612,7 +612,9 @@ void FreeMayaqua()
+ 	// Release of OS
+ 	OSFree();
+ }
+-
++extern char * __attribute__((weak)) GetAndroidTmpDir(){
++    return NULL;
++}
+ // Check whether /tmp is available in the UNIX
+ void CheckUnixTempDir()
+ {
+@@ -621,7 +623,7 @@ void CheckUnixTempDir()
+ 		char tmp[128], tmp2[64];
+ 		UINT64 now = SystemTime64();
+ 		IO *o;
++        char* tmpDir = GetAndroidTmpDir();
+
+ 		//MakeDir("/tmp");
+ 		MakeDir(tmpDir);
+diff --git a/src/Mayaqua/Microsoft.c b/src/Mayaqua/Microsoft.c
+index 5f9e015..534eb0c 100644
+--- a/src/Mayaqua/Microsoft.c
++++ b/src/Mayaqua/Microsoft.c
+@@ -1892,8 +1892,8 @@ bool MsExecDriverInstaller(char *arg)
+ 		return false;
+ 	}
+
+
+ 	// Extract the File
+ 	UniFormat(tmp, sizeof(tmp), VISTA_DRIVER_INSTALLER_DST, MsGetMyTempDirW());
+diff --git a/src/hamcorebuilder/main.c b/src/hamcorebuilder/main.c
+index da7daa9..5a4d3ab 100755
+--- a/src/hamcorebuilder/main.c
++++ b/src/hamcorebuilder/main.c
+@@ -4,7 +4,7 @@
+
+ int main(const int argc, const char *argv[])
+ {
+
+
+
+ 	if (argc < 3)
+ 	{
+diff --git a/src/vpnbridge/CMakeLists.txt b/src/vpnbridge/CMakeLists.txt
+index 4efa4cf..54805c3 100644
+--- a/src/vpnbridge/CMakeLists.txt
++++ b/src/vpnbridge/CMakeLists.txt
+@@ -32,14 +32,14 @@ set_target_properties(vpnbridge
+ target_link_libraries(vpnbridge cedar)
+
+ if(UNIX)
+
+   install(TARGETS vpnbridge
+     COMPONENT "vpnbridge"
+     DESTINATION "${CMAKE_INSTALL_LIBEXECDIR}/softether/vpnbridge"
+     PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
+   )
+
+
+     COMPONENT "vpnbridge"
+     DESTINATION "${CMAKE_INSTALL_LIBEXECDIR}/softether/vpnbridge"
+     PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ
+diff --git a/src/vpnclient/CMakeLists.txt b/src/vpnclient/CMakeLists.txt
+index 528a637..1696f60 100644
+--- a/src/vpnclient/CMakeLists.txt
++++ b/src/vpnclient/CMakeLists.txt
+@@ -28,18 +28,28 @@ set_target_properties(vpnclient
+   LIBRARY_OUTPUT_DIRECTORY "${BUILD_DIRECTORY}"
+   RUNTIME_OUTPUT_DIRECTORY "${BUILD_DIRECTORY}"
+ )
+-
+ target_link_libraries(vpnclient cedar)
+
++if(ANDROID_ABI)
++  add_library(androidvpnclient SHARED "vpncsvc.c")
++  set_target_properties(androidvpnclient
++        PROPERTIES
++        ARCHIVE_OUTPUT_DIRECTORY "${BUILD_DIRECTORY}"
++        LIBRARY_OUTPUT_DIRECTORY "${BUILD_DIRECTORY}"
++        RUNTIME_OUTPUT_DIRECTORY "${BUILD_DIRECTORY}"
++        )
++  target_link_libraries(androidvpnclient cedar)
++endif ()
++
+ if(UNIX)
+
+   install(TARGETS vpnclient
+     COMPONENT "vpnclient"
+     DESTINATION "${CMAKE_INSTALL_LIBEXECDIR}/softether/vpnclient"
+     PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
+   )
+
+
+     COMPONENT "vpnclient"
+     DESTINATION "${CMAKE_INSTALL_LIBEXECDIR}/softether/vpnclient"
+     PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ
+diff --git a/src/vpnclient/vpncsvc.c b/src/vpnclient/vpncsvc.c
+index 74d6da0..4584bf3 100644
+--- a/src/vpnclient/vpncsvc.c
++++ b/src/vpnclient/vpncsvc.c
+@@ -13,6 +13,7 @@
+ #include "Mayaqua/Microsoft.h"
+ #include "Mayaqua/Unix.h"
+ #include "Mayaqua/Win32.h"
++#include <stdio.h>
+
+ // Process start function
+ void StartProcess()
+@@ -30,17 +31,25 @@ void StopProcess()
+ 	FreeCedar();
+ }
+
+-// WinMain function
+-int main(int argc, char *argv[])
++extern int VpnClientMain(int argc, char *argv[])
+ {
+-	InitProcessCallOnce();
++    InitProcessCallOnce();
+
+ #ifdef	OS_WIN32
+
+-	return MsService(GC_SVC_NAME_VPNCLIENT, StartProcess, StopProcess, ICO_MACHINE, argv[0]);
++    return MsService(GC_SVC_NAME_VPNCLIENT, StartProcess, StopProcess, ICO_MACHINE, argv[0]);
+ #else	// OS_WIN32
+-	return UnixService(argc, argv, "vpnclient", StartProcess, StopProcess);
++    return UnixService(argc, argv, "vpnclient", StartProcess, StopProcess);
+ #endif	// OS_WIN32
+ }
+
++// WinMain function
++int main(int argc, char *argv[])
++{
++    return VpnClientMain(argc, argv);
++}
++
+
+diff --git a/src/vpncmd/CMakeLists.txt b/src/vpncmd/CMakeLists.txt
+index 2fd448c..f504f90 100644
+--- a/src/vpncmd/CMakeLists.txt
++++ b/src/vpncmd/CMakeLists.txt
+@@ -32,14 +32,14 @@ endif()
+ target_link_libraries(vpncmd cedar)
+
+ if(UNIX)
+
+   install(TARGETS vpncmd
+     COMPONENT "vpncmd"
+     DESTINATION "${CMAKE_INSTALL_LIBEXECDIR}/softether/vpncmd"
+     PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
+   )
+
+
+     COMPONENT "vpncmd"
+     DESTINATION "${CMAKE_INSTALL_LIBEXECDIR}/softether/vpncmd"
+     PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ
+diff --git a/src/vpndrvinst/Device.c b/src/vpndrvinst/Device.c
+index 6efcb08..f4dfde7 100644
+--- a/src/vpndrvinst/Device.c
++++ b/src/vpndrvinst/Device.c
+@@ -180,10 +180,10 @@ bool InstallDeviceWithMac(const char *instance, const char *mac)
+ 		return false;
+ 	}
+
+
+ 	if (!hamcore)
+ 	{
+
+ 		return false;
+ 	}
+
+diff --git a/src/vpninstall/vpninstall.c b/src/vpninstall/vpninstall.c
+index 971e55e..2f506b8 100644
+--- a/src/vpninstall/vpninstall.c
++++ b/src/vpninstall/vpninstall.c
+@@ -124,7 +124,7 @@ void ViInstallProcessStart(HWND hWnd, VI_INSTALL_DLG *d)
+ 	}
+
+ 	ViGenerateVpnSMgrTempDirName(instdir, sizeof(instdir), ViGetSuitableArchForCpu()->Build);
+
+
+ 	exew = setting.DownloadedInstallerPathW;
+ 	d->NoClose = true;
+diff --git a/src/vpnserver/CMakeLists.txt b/src/vpnserver/CMakeLists.txt
+index 2e86011..eec0fcb 100644
+--- a/src/vpnserver/CMakeLists.txt
++++ b/src/vpnserver/CMakeLists.txt
+@@ -32,14 +32,14 @@ set_target_properties(vpnserver
+ target_link_libraries(vpnserver cedar)
+
+ if(UNIX)
+
+   install(TARGETS vpnserver
+     COMPONENT "vpnserver"
+     DESTINATION "${CMAKE_INSTALL_LIBEXECDIR}/softether/vpnserver"
+     PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
+   )
+
+     COMPONENT "vpnserver"
+     DESTINATION "${CMAKE_INSTALL_LIBEXECDIR}/softether/vpnserver"
+     PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ
