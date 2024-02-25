@@ -55,7 +55,7 @@ fi
 
 # Clone SoftEtherVPN
 if [ ! -d "SoftEtherVPN" ]; then
-    git clone --depth=1 https://github.com/SoftEtherVPN/SoftEtherVPN.git -b $SOFTETHERVPN_VERSION
+    git clone --depth=1 https://github.com/antnn/SoftEtherVPN.git 
     (cd SoftEtherVPN && git submodule update --init --recursive)
 else
     echo "Directory 'SoftEtherVPN' already exists, skipping clone."
