@@ -15,6 +15,18 @@
           <accountId value="VXNlcjoxMDU2Mjc=" />
           <internalId value="6d9a2141-9750-4cff-bd9f-18d11507036c" />
         </chat>
+        <chat>
+          <accountId value="VXNlcjoxMDU2Mjc=" />
+          <internalId value="e3004de3-f9ef-46df-989b-9c566a0c59d7" />
+        </chat>
+        <chat>
+          <accountId value="VXNlcjoxMDU2Mjc=" />
+          <internalId value="24442fbc-2d80-41e4-836e-e90ed55d5212" />
+        </chat>
+        <chat>
+          <accountId value="VXNlcjoxMDU2Mjc=" />
+          <internalId value="b6544831-a9f7-49f3-819f-7fabab0cfb98" />
+        </chat>
       </list>
     </chats>
   </component>

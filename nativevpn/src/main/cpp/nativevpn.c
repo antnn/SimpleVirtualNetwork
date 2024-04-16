@@ -45,7 +45,6 @@ void Java_ru_valishin_nativevpn_NativeVpn_nativeStartVpnClient(JNIEnv *env,
 
     jint result = VpnClientMain(argc, argv);
 
-    // Free the allocated memory for argv
     for (jsize i = 0; i < argc; i++) {
         free(argv[i]);
     }
@@ -64,10 +63,28 @@ extern char * GetAndroidDbDir(){
     return strdup(global_data.db_dir);
 }
 
-extern void AndroidLog(char* message) {
-    __android_log_print(ANDROID_LOG_DEBUG, "NativeVpn", "%s", message);
+extern void AndroidLog(const char* tag, const char* fmt, ...) {
+    char newTag[128];
+    snprintf(newTag, sizeof(newTag), "NativeVPN: %s", tag);
+
+    va_list args;
+    va_start(args, fmt);
+
+    char message[4096];
+    vsnprintf(message, sizeof(message), fmt, args);
+
+    __android_log_print(ANDROID_LOG_DEBUG, newTag, "%s", message);
+
+    va_end(args);
 }
 
+void signalHandler(int signal) {
+    // Handle the signal if needed
+}
+extern void AndroidPause() {
+    signal(SIGUSR1, signalHandler);
+    pause();
+}
 
 void init_globals(char** out,JNIEnv *env, jobject thiz, jstring dir) {
     const char *nativeDir = (*env)->GetStringUTFChars(env, dir, 0);
