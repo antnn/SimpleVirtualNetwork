@@ -62,7 +62,7 @@ extern char * GetAndroidLogDir(){
 extern char * GetAndroidDbDir(){
     return strdup(global_data.db_dir);
 }
-
+//TODO revert to previous version
 extern void AndroidLog(const char* tag, const char* fmt, ...) {
     char newTag[128];
     snprintf(newTag, sizeof(newTag), "NativeVPN: %s", tag);
