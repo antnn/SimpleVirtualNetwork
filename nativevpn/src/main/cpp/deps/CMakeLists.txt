@@ -1,11 +1,13 @@
 cmake_minimum_required(VERSION 3.22.1)
 
-function(log_error result command args dir )
+
+function(log_error error command args dir )
     string(REPLACE ";" "\\ " command_print "${command}")
     string(REPLACE ";" "\\ " args_print "${args}")
-    message(FATAL_ERROR "Build_external command failed with result: ${result}}\n\
-directory: ${dir}\n\
-command: ${command_print} ${args_print}")
+    message (SEND_ERROR "BUILD FAILED AT: ${dir}")
+    message (SEND_ERROR "COMMAND: ${command_print}\n WITH ARGS: ${args_print}")
+    message(FATAL_ERROR "Function Build_external command output:\n\
+    ${error}")
 endfunction()
 
 function(build_external target src_dir)
@@ -27,17 +29,19 @@ function(build_external target src_dir)
     execute_process(COMMAND ${CMAKE_COMMAND} ${CMAKE_ARGS} .
             WORKING_DIRECTORY ${trigger_build_dir}
             RESULT_VARIABLE result
+            ERROR_VARIABLE error
             )
     if(NOT result EQUAL "0")
-       log_error(result "${CMAKE_COMMAND}" "${CMAKE_ARGS}" "${trigger_build_dir}")
+       log_error("${error}" "${CMAKE_COMMAND}" "${CMAKE_ARGS}" "${trigger_build_dir}")
     endif()
 
     execute_process(COMMAND ${CMAKE_COMMAND} --build .
             WORKING_DIRECTORY ${trigger_build_dir}
             RESULT_VARIABLE result
+            ERROR_VARIABLE error
             )
     if(NOT result EQUAL "0")
-        log_error(result "${CMAKE_COMMAND}" "--build ." "${trigger_build_dir}")
+        log_error("${error}" "${CMAKE_COMMAND}" "--build ." "${trigger_build_dir}")
     endif()
 endfunction()
 
@@ -117,15 +121,17 @@ ${ext_source_dir}")
     execute_process(COMMAND ${env} ${CMAKE_COMMAND} ${ARGN} .
             WORKING_DIRECTORY ${ext_source_dir}
             RESULT_VARIABLE result
+            ERROR_VARIABLE error
             )
     if(NOT result EQUAL "0")
-        log_error(result "${env} ${CMAKE_COMMAND}" "${CMAKE_ARGS}" "${ext_source_dir}")
+        log_error("${error}" "${env} ${CMAKE_COMMAND}" "${CMAKE_ARGS}" "${ext_source_dir}")
     endif()
     execute_process(COMMAND ${env} ${CMAKE_COMMAND} --build . -j${NPROC}
             WORKING_DIRECTORY ${ext_source_dir}
             RESULT_VARIABLE result
+            ERROR_VARIABLE error
             )
     if(NOT result EQUAL "0")
-        log_error(result "${env} ${CMAKE_COMMAND}" " --build . -j${NPROC} " "${ext_source_dir}")
+        log_error("${error}" "${env} ${CMAKE_COMMAND}" " --build . -j${NPROC} " "${ext_source_dir}")
     endif()
 endfunction()
