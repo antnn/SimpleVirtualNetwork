@@ -32,8 +32,14 @@ find_package(PkgConfig REQUIRED)
 
 add_subdirectory(${DEPS_DIR})
 
+set(IN_BUILD_PHASE ON)
+if(${CMAKE_CURRENT_LIST_FILE} STREQUAL "${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt")
+  set(IN_BUILD_PHASE OFF)
+endif()
+
+
 find_package(OpenSSL)
-if (NOT OPENSSL_FOUND)
+if (NOT OPENSSL_FOUND AND IN_BUILD_PHASE)
     get_openssl_target(OPENSSL_TARGET)
     set(openssl_configure_command
             "./Configure ${OPENSSL_TARGET} --prefix=${A_PREFIX_PATH} \
@@ -48,14 +54,10 @@ get_autoconf_target(AUTOCONF_TARGET)
 set(common_configure_command
         "./configure --host=${AUTOCONF_TARGET}  --prefix=${A_PREFIX_PATH}"
         )
-find_package(Iconv)
-if (NOT Iconv_FOUND)
-    build_autoconf_external_project(iconv "" "${common_configure_command}" "" " install-lib ")
-    find_package(Iconv REQUIRED)
-endif ()
+
 
 pkg_search_module(SODIUM libsodium)
-IF(NOT SODIUM_FOUND)
+IF(NOT SODIUM_FOUND AND IN_BUILD_PHASE)
     if(ANDROID_ABI STREQUAL "arm64-v8a")
         build_autoconf_external_project(libsodium  CFLAGS=-march=armv8-a+crypto+aes
                 " ${common_configure_command} " "" " install ")
@@ -65,26 +67,8 @@ IF(NOT SODIUM_FOUND)
     pkg_search_module(SODIUM libsodium REQUIRED)
 endif ()
 
-#find_library(LIB_READLINE readline)
-#IF (NOT LIB_READLINE)
-#    build_autoconf_external_project(readline "" "${common_configure_command}" "" " install-shared " )
-#    find_library(LIB_READLINE readline REQUIRED)
-#endif()
-#message(STATUS "Found Readline: ${LIB_READLINE}")
 
-
-#find_package(Curses)
-#IF (NOT CURSES_FOUND)
-#    build_autoconf_external_project(ncurses "" "${common_configure_command} \
-#        --with-shared --disable-stripping" "" "install")
-#    message(WARNING "Retry if fails, it may work. Cmake may have built curses already")
-#    find_package(Curses REQUIRED)
-#endif()
-
-
-
-
-
+if (IN_BUILD_PHASE)
 function(build_hamcorebuilder_on_host)
     # workdir is output dir
     message(STATUS "Building hamcorebuilder on host system and to add to PATH during vpnclient build")
@@ -97,8 +81,9 @@ find_library(lib_Mayaqua mayaqua)
 find_library(lib_Cedar cedar)
 find_library(lib_Hamcore hamcore.se2)
 find_library(lib_Vpnclient androidvpnclient)
+endif()
 
-if(NOT lib_Mayaqua OR NOT lib_Cedar OR NOT lib_Hamcore OR NOT lib_Vpnclient)
+if( IN_BUILD_PHASE AND (NOT lib_Mayaqua OR NOT lib_Cedar OR NOT lib_Hamcore OR NOT lib_Vpnclient))
     build_hamcorebuilder_on_host()
     message(STATUS "Replacing string 'hamcore.se' to 'hamcore.se.so'")
     execute_process(  COMMAND  bash -c "find . -type f -name \"*\" -exec sed -i 's/hamcore\\.se2\\([^.\\]\\|\\$\\)/hamcore.se2.so\\1/g' {} +"
@@ -135,9 +120,6 @@ target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE
         log
         OpenSSL::SSL
         OpenSSL::Crypto
-        Iconv::Iconv
-        ${CURSES_LIBRARIES}
-        ${LIB_READLINE}
         $<IF:$<BOOL:SODIUM_LINK_LIBRARIES>,${SODIUM_LINK_LIBRARIES},${SODIUM_LIBRARIES}>
         ${lib_Mayaqua}
         ${lib_Cedar}
