@@ -1,8 +1,23 @@
 cmake_minimum_required(VERSION 3.22.1)
 
+set(CMAKE_ARGS "" CACHE INTERNAL "")
+get_cmake_property(vars CACHE_VARIABLES)
+foreach(var ${vars})
+    if("${var}" MATCHES "^(CMAKE_|BUILD_|INSTALL_|CPACK_|prefix_result|_|pkgcfg_lib_|Iconv_|OPENSSL_|CURSES_|NCURSES_|SODIUM_|FIND_PACKAGE_|PKG_CONFIG_)")
+        if( NOT "${var}" MATCHES "^(CMAKE_TOOLCHAIN_)")
+            continue()
+        endif ()
+    endif()
+    list(APPEND CMAKE_ARGS "-D${var}=${${var}}")
+endforeach()
+
 project("nativevpn")
 
-# Keep in sync with deps/CMakeLists.txt
+cmake_host_system_information(RESULT nproc
+        QUERY NUMBER_OF_PHYSICAL_CORES)
+set(NPROC ${nproc} CACHE INTERNAL "")
+
+#globals for deps/CMakeLists.txt and subprojects
 set(A_PREFIX_PATH "${CMAKE_SOURCE_DIR}/deps/external/root/${ANDROID_ABI}" CACHE INTERNAL "" )
 set(EXTERNAL_DIR "${CMAKE_SOURCE_DIR}/deps/external" CACHE INTERNAL "" )
 set(DEPS_DIR "${CMAKE_SOURCE_DIR}/deps" CACHE INTERNAL "" )
@@ -13,14 +28,47 @@ list(APPEND CMAKE_PREFIX_PATH "${A_PREFIX_PATH}" )
 set(CMAKE_FIND_ROOT_PATH "${CMAKE_FIND_ROOT_PATH}" "${A_PREFIX_PATH}" )
 #
 
-
-
-find_package(OpenSSL REQUIRED )
-
 find_package(PkgConfig REQUIRED)
-pkg_search_module(SODIUM libsodium REQUIRED)
+
+add_subdirectory(${DEPS_DIR})
+
+set(IN_BUILD_PHASE ON)
+if(${CMAKE_CURRENT_LIST_FILE} STREQUAL "${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt")
+  set(IN_BUILD_PHASE OFF)
+endif()
 
 
+find_package(OpenSSL)
+if (NOT OPENSSL_FOUND AND IN_BUILD_PHASE)
+    get_openssl_target(OPENSSL_TARGET)
+    set(openssl_configure_command
+            "./Configure ${OPENSSL_TARGET} --prefix=${A_PREFIX_PATH} \
+            -D__ANDROID_API__=${ANDROID_NATIVE_API_LEVEL}\
+            -fPIC no-ui no-ui-console no-engine no-filenames " )
+    #name of the project is child source dir
+    build_autoconf_external_project(openssl "" "${openssl_configure_command}" "" " install_dev install_runtime_libs " )
+    find_package(OpenSSL REQUIRED)
+endif ()
+
+get_autoconf_target(AUTOCONF_TARGET)
+set(common_configure_command
+        "./configure --host=${AUTOCONF_TARGET}  --prefix=${A_PREFIX_PATH}"
+        )
+
+
+pkg_search_module(SODIUM libsodium)
+IF(NOT SODIUM_FOUND AND IN_BUILD_PHASE)
+    if(ANDROID_ABI STREQUAL "arm64-v8a")
+        build_autoconf_external_project(libsodium  CFLAGS=-march=armv8-a+crypto+aes
+                " ${common_configure_command} " "" " install ")
+    else ()
+        build_autoconf_external_project(libsodium "" "${common_configure_command}" "" " install ")
+    endif()
+    pkg_search_module(SODIUM libsodium REQUIRED)
+endif ()
+
+
+if (IN_BUILD_PHASE)
 function(build_hamcorebuilder_on_host)
     # workdir is output dir
     message(STATUS "Building hamcorebuilder on host system and to add to PATH during vpnclient build")
@@ -33,8 +81,9 @@ find_library(lib_Mayaqua mayaqua)
 find_library(lib_Cedar cedar)
 find_library(lib_Hamcore hamcore.se2)
 find_library(lib_Vpnclient androidvpnclient)
+endif()
 
-if(NOT lib_Mayaqua OR NOT lib_Cedar OR NOT lib_Hamcore OR NOT lib_Vpnclient)
+if( IN_BUILD_PHASE AND (NOT lib_Mayaqua OR NOT lib_Cedar OR NOT lib_Hamcore OR NOT lib_Vpnclient))
     build_hamcorebuilder_on_host()
     message(STATUS "Replacing string 'hamcore.se' to 'hamcore.se.so'")
     execute_process(  COMMAND  bash -c "find . -type f -name \"*\" -exec sed -i 's/hamcore\\.se2\\([^.\\]\\|\\$\\)/hamcore.se2.so\\1/g' {} +"
@@ -76,4 +125,4 @@ target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE
         ${lib_Cedar}
         #${lib_Hamcore}
         ${lib_vpnclient}
-)
+        )

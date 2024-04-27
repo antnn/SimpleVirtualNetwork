@@ -1,23 +1,6 @@
 cmake_minimum_required(VERSION 3.22.1)
 
 
-project("deps_project")
-cmake_host_system_information(RESULT nproc
-        QUERY NUMBER_OF_PHYSICAL_CORES)
-set(NPROC ${nproc} CACHE INTERNAL "")
-
-#Keep in sync with ../CMakeLists.txt
-set(A_PREFIX_PATH "${CMAKE_SOURCE_DIR}/external/root/${ANDROID_ABI}" CACHE INTERNAL "" )
-set(EXTERNAL_DIR "${CMAKE_SOURCE_DIR}/external" CACHE INTERNAL "" )
-set(DEPS_DIR "${CMAKE_SOURCE_DIR}/" CACHE INTERNAL "" )
-
-#fix find_package
-list(APPEND CMAKE_PREFIX_PATH "${A_PREFIX_PATH}" )
-set(CMAKE_FIND_ROOT_PATH "${CMAKE_FIND_ROOT_PATH}" "${A_PREFIX_PATH}" )
-#
-add_custom_target("deps_target")
-
-
 function(log_error error command args dir )
     string(REPLACE ";" "\\ " command_print "${command}")
     string(REPLACE ";" "\\ " args_print "${args}")
@@ -38,12 +21,28 @@ function(build_external target src_dir)
         ExternalProject_add( ${target}
     ${ARGN} )
         add_custom_target(trigger_${target})
-        add_dependencies(deps_target ${target})
+        add_dependencies(trigger_${target} ${target})
     ")
 
     file(WRITE "${trigger_build_dir}/CMakeLists.txt" "${CMAKE_LIST_CONTENT}")
-    add_subdirectory("${trigger_build_dir}")
 
+    execute_process(COMMAND ${CMAKE_COMMAND} ${CMAKE_ARGS} .
+            WORKING_DIRECTORY ${trigger_build_dir}
+            RESULT_VARIABLE result
+            ERROR_VARIABLE error
+            )
+    if(NOT result EQUAL "0")
+       log_error("${error}" "${CMAKE_COMMAND}" "${CMAKE_ARGS}" "${trigger_build_dir}")
+    endif()
+
+    execute_process(COMMAND ${CMAKE_COMMAND} --build .
+            WORKING_DIRECTORY ${trigger_build_dir}
+            RESULT_VARIABLE result
+            ERROR_VARIABLE error
+            )
+    if(NOT result EQUAL "0")
+        log_error("${error}" "${CMAKE_COMMAND}" "--build ." "${trigger_build_dir}")
+    endif()
 endfunction()
 
 
@@ -88,6 +87,7 @@ LD=${ANDROID_TOOLCHAIN_ROOT}/bin/ld \
 RANLIB=${ANDROID_TOOLCHAIN_ROOT}/bin/llvm-ranlib \
 STRIP=${ANDROID_TOOLCHAIN_ROOT}/bin/llvm-strip \
 PATH=${ANDROID_TOOLCHAIN_ROOT}/bin:$ENV{PATH} \
+LDFLAGS=-avoid-version \
 ${env}")
 
     set(lib_SOURCE_DIR "${EXTERNAL_DIR}/${project}")
@@ -105,9 +105,11 @@ ${ext_source_dir}")
             " BUILD_COMMAND ${CMAKE_COMMAND} -E env ${android_env} $(MAKE) -j${NPROC} ${build_args} "
             " INSTALL_COMMAND ${CMAKE_COMMAND} -E env ${android_env} $(MAKE) -j${NPROC} ${install_args} "
             " CMAKE_ARGS ${CMAKE_ARGS} "
+            " OVERRIDE_FIND_PACKAGE "
     )
 endfunction()
 
+#[[
 function (build_external_cmake project env)
     message(STATUS "Building external cmake project: ${project}")
     set(lib_SOURCE_DIR "${EXTERNAL_DIR}/${project}")
@@ -115,37 +117,24 @@ function (build_external_cmake project env)
     message(STATUS "INFO: BUILD_IN_SOURCE 1. Copy ${project} sources to make by ExternalProject \
 ${ext_source_dir}")
     file(COPY "${lib_SOURCE_DIR}" DESTINATION "${ext_source_dir}/..")
-    add_subdirectory("${ext_source_dir}")
-endfunction()
-
-
-
-
-get_autoconf_target(AUTOCONF_TARGET)
-set(common_configure_command
-        "./configure --host=${AUTOCONF_TARGET}  --prefix=${A_PREFIX_PATH}"
-)
-
-find_package(PkgConfig REQUIRED)
-find_package(OpenSSL)
-if (NOT OPENSSL_FOUND)
-    get_openssl_target(OPENSSL_TARGET)
-    set(openssl_configure_command
-            "./Configure ${OPENSSL_TARGET} --prefix=${A_PREFIX_PATH} \
-            -D__ANDROID_API__=${ANDROID_NATIVE_API_LEVEL}\
-            -fPIC no-ui no-ui-console no-engine no-filenames " )
-    build_autoconf_external_project(openssl "" "${openssl_configure_command}" "" " install_dev install_runtime_libs " )
-endif ()
-
-
-pkg_search_module(SODIUM libsodium)
-IF(NOT SODIUM_FOUND)
-    if(ANDROID_ABI STREQUAL "arm64-v8a")
-        build_autoconf_external_project(libsodium  CFLAGS=-march=armv8-a+crypto+aes
-                " ${common_configure_command} " "" " install ")
-    else ()
-        build_autoconf_external_project(libsodium "" "${common_configure_command}" "" " install ")
+    if(env)
+        set(env env ${env} )
+    endif ()
+    execute_process(COMMAND ${env} ${CMAKE_COMMAND} ${ARGN} .
+            WORKING_DIRECTORY ${ext_source_dir}
+            RESULT_VARIABLE result
+            ERROR_VARIABLE error
+            )
+    if(NOT result EQUAL "0")
+        log_error("${error}" "${env} ${CMAKE_COMMAND}" "${CMAKE_ARGS}" "${ext_source_dir}")
     endif()
-endif ()
-
-
+    execute_process(COMMAND ${env} ${CMAKE_COMMAND} --build . -j${NPROC}
+            WORKING_DIRECTORY ${ext_source_dir}
+            RESULT_VARIABLE result
+            ERROR_VARIABLE error
+            )
+    if(NOT result EQUAL "0")
+        log_error("${error}" "${env} ${CMAKE_COMMAND}" " --build . -j${NPROC} " "${ext_source_dir}")
+    endif()
+endfunction()
+]]
