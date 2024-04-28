@@ -116,7 +116,7 @@ foreach (ANDROID_ABI ${abis})
             RESULT_VARIABLE result
     )
     if (NOT result EQUAL "0")
-        log_error("${error}")
+        return(result)
     endif ()
 
     execute_process(
@@ -125,7 +125,7 @@ foreach (ANDROID_ABI ${abis})
             RESULT_VARIABLE result
     )
     if (NOT result EQUAL "0")
-        log_error("${error}")
+        return(result)
     endif ()
 
     message(STATUS "Libraries are installed at:
