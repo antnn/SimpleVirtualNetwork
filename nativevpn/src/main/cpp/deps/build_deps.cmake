@@ -130,6 +130,5 @@ foreach (ANDROID_ABI ${abis})
 ${A_PREFIX_PATH}")
 
     patch_softether(${CMAKE_SOURCE_DIR}/external/SoftEtherVPN)
-
 endforeach ()
 
