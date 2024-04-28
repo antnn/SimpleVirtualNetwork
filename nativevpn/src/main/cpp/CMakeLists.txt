@@ -65,24 +65,6 @@ IF(NOT SODIUM_FOUND)
     pkg_search_module(SODIUM libsodium REQUIRED)
 endif ()
 
-#find_library(LIB_READLINE readline)
-#IF (NOT LIB_READLINE)
-#    build_autoconf_external_project(readline "" "${common_configure_command}" "" " install-shared " )
-#    find_library(LIB_READLINE readline REQUIRED)
-#endif()
-#message(STATUS "Found Readline: ${LIB_READLINE}")
-
-
-#find_package(Curses)
-#IF (NOT CURSES_FOUND)
-#    build_autoconf_external_project(ncurses "" "${common_configure_command} \
-#        --with-shared --disable-stripping" "" "install")
-#    message(WARNING "Retry if fails, it may work. Cmake may have built curses already")
-#    find_package(Curses REQUIRED)
-#endif()
-
-
-
 
 
 function(build_hamcorebuilder_on_host)

@@ -1,15 +1,18 @@
 cmake_minimum_required(VERSION 3.22.1)
 
+if(NOT ANDROID_ABI)
+    return()
+endif ()
 
 project("deps_project")
 cmake_host_system_information(RESULT nproc
         QUERY NUMBER_OF_PHYSICAL_CORES)
 set(NPROC ${nproc} CACHE INTERNAL "")
 
-#Keep in sync with ../CMakeLists.txt
+#Keep in sync with ../CMakeLists.txt and ../build_deps.cmake
 set(A_PREFIX_PATH "${CMAKE_SOURCE_DIR}/external/root/${ANDROID_ABI}" CACHE INTERNAL "" )
 set(EXTERNAL_DIR "${CMAKE_SOURCE_DIR}/external" CACHE INTERNAL "" )
-set(DEPS_DIR "${CMAKE_SOURCE_DIR}/" CACHE INTERNAL "" )
+
 
 #fix find_package
 list(APPEND CMAKE_PREFIX_PATH "${A_PREFIX_PATH}" )
