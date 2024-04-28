@@ -92,6 +92,8 @@ function(patch_softether DIR)
 endfunction()
 
 
+patch_softether(${CMAKE_SOURCE_DIR}/external/SoftEtherVPN)
+
 message(STATUS "Building dependencies for SoftEtherVPN")
 set(abis "arm64-v8a" "armeabi-v7a" "x86" "x86_64")
 foreach (ANDROID_ABI ${abis})
@@ -129,6 +131,5 @@ foreach (ANDROID_ABI ${abis})
     message(STATUS "Libraries are installed at:
 ${A_PREFIX_PATH}")
 
-    patch_softether(${CMAKE_SOURCE_DIR}/external/SoftEtherVPN)
 endforeach ()
 
