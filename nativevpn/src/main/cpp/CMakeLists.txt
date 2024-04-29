@@ -26,9 +26,6 @@ target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE
         log
         OpenSSL::SSL
         OpenSSL::Crypto
-        Iconv::Iconv
-        ${CURSES_LIBRARIES}
-        ${LIB_READLINE}
         $<IF:$<BOOL:SODIUM_LINK_LIBRARIES>,${SODIUM_LINK_LIBRARIES},${SODIUM_LIBRARIES}>
         ${lib_Mayaqua}
         ${lib_Cedar}
