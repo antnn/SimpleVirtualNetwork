@@ -195,20 +195,3 @@ if(NOT lib_Mayaqua OR NOT lib_Cedar OR NOT lib_Hamcore OR NOT lib_Vpnclient)
     find_library(lib_vpnclient androidvpnclient)
 endif()
 
-#Keep it so Android Studio copies libraries automatically to APK's jniLibs
-add_library(${CMAKE_PROJECT_NAME} SHARED
-        nativevpn.c)
-target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE
-        android
-        log
-        OpenSSL::SSL
-        OpenSSL::Crypto
-        Iconv::Iconv
-        ${CURSES_LIBRARIES}
-        ${LIB_READLINE}
-        $<IF:$<BOOL:SODIUM_LINK_LIBRARIES>,${SODIUM_LINK_LIBRARIES},${SODIUM_LIBRARIES}>
-        ${lib_Mayaqua}
-        ${lib_Cedar}
-        #${lib_Hamcore}
-        ${lib_vpnclient}
-)
