@@ -152,3 +152,63 @@ IF(NOT SODIUM_FOUND)
 endif ()
 
 
+
+function(build_hamcorebuilder_on_host)
+    # workdir is output dir
+    message(STATUS "Building hamcorebuilder on host system and to add to PATH during vpnclient build")
+    execute_process(COMMAND /bin/bash "${DEPS_DIR}/hamcorebuilder.sh"
+            WORKING_DIRECTORY ${DEPS_DIR} )
+endfunction()
+
+
+find_library(lib_Mayaqua mayaqua)
+find_library(lib_Cedar cedar)
+find_library(lib_Hamcore hamcore.se2)
+find_library(lib_Vpnclient androidvpnclient)
+
+if(NOT lib_Mayaqua OR NOT lib_Cedar OR NOT lib_Hamcore OR NOT lib_Vpnclient)
+    build_hamcorebuilder_on_host()
+    message(STATUS "Replacing string 'hamcore.se' to 'hamcore.se.so'")
+    execute_process(  COMMAND  bash -c "find . -type f -name \"*\" -exec sed -i 's/hamcore\\.se2\\([^.\\]\\|\\$\\)/hamcore.se2.so\\1/g' {} +"
+            WORKING_DIRECTORY ${EXTERNAL_DIR}/SoftEtherVPN)
+    set(softether_cmake_args ${CMAKE_ARGS} )
+    list(APPEND softether_cmake_args "-DCMAKE_PREFIX_PATH=${A_PREFIX_PATH}"
+            "-DCMAKE_FIND_ROOT_PATH=${A_PREFIX_PATH}" )
+    #list(APPEND softether_cmake_args "-DCMAKE_FIND_ROOT_PATH=${A_PREFIX_PATH}" )
+
+    #path to hamcorebuilder
+    #name of a project is a child source dir
+    build_external_cmake(SoftEtherVPN
+            "PATH=${DEPS_DIR}:$ENV{PATH}"
+            ${softether_cmake_args} )
+
+    #file(RENAME "${EXTERNAL_DIR}/build/${ANDROID_ABI}/SoftEtherVPN/vpnclient"
+    #        "${EXTERNAL_DIR}/build/${ANDROID_ABI}/SoftEtherVPN/libsoftethervpnclient.so"
+    #        )
+    file(GLOB SO_FILES "${EXTERNAL_DIR}/build/${ANDROID_ABI}/SoftEtherVPN/*.so")
+    file(COPY ${SO_FILES} DESTINATION ${A_PREFIX_PATH}/lib)
+    file(COPY ${SO_FILES} DESTINATION ${MY_ANDROID_MODULE_DIR}/src/main/jniLibs/${ANDROID_ABI})
+
+    find_library(lib_Mayaqua libmayaqua)
+    #find_library(lib_Hamcore hamcore.se2)
+    find_library(lib_Cedar libcedar)
+    find_library(lib_vpnclient androidvpnclient)
+endif()
+
+#Keep it so Android Studio copies libraries automatically to APK's jniLibs
+add_library(${CMAKE_PROJECT_NAME} SHARED
+        nativevpn.c)
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE
+        android
+        log
+        OpenSSL::SSL
+        OpenSSL::Crypto
+        Iconv::Iconv
+        ${CURSES_LIBRARIES}
+        ${LIB_READLINE}
+        $<IF:$<BOOL:SODIUM_LINK_LIBRARIES>,${SODIUM_LINK_LIBRARIES},${SODIUM_LIBRARIES}>
+        ${lib_Mayaqua}
+        ${lib_Cedar}
+        #${lib_Hamcore}
+        ${lib_vpnclient}
+)
