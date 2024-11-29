@@ -11,7 +11,7 @@ ARG NDK_VERSION="27.0.12077973" \
     OPENSSL_VERSION="3.4.0" \
     SODIUM_VERSION="1.0.20-RELEASE" \
     ANDROID_HOME="/opt/android-sdk" \
-    ANDROID_NDK_ROOT="/opt/android-sdk/ndk/${NDK_VERSION}" \
+    ANDROID_NDK_ROOT="${ANDROID_HOME}/ndk/${NDK_VERSION}" \
     PATH="${ANDROID_HOME}/cmake/${CMAKE_VERSION}/bin:${ANDROID_HOME}/cmdline-tools/bin:${PATH}"
 
 
