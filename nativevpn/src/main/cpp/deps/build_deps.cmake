@@ -12,7 +12,7 @@ set(SOFTETHERVPN_VERSION "5.02.5187" CACHE STRING "SoftEtherVPN version")
 set(OPENSSL_VERSION "3.4.0" CACHE STRING "OpenSSL version")
 set(SODIUM_VERSION "1.0.20-RELEASE" CACHE STRING "libsodium version")
 
-set(NDK "$ENV{ANDROID_NDK_ROOT}" CACHE PATH "Android NDK path")
+set(NDK "$ENV{ANDROID_NDK_ROOT}/"$ENV{NDK_VERSION}" CACHE PATH "Android NDK path")
 # android_app_name/nativevpn/src/main/jniLibs/
 set(JNI_LIBS_DIR "${CMAKE_SOURCE_DIR}/../../jniLibs")
 set(EXTRA_ARGS "-DMY_JNI_LIBS_DIR=${JNI_LIBS_DIR}")
