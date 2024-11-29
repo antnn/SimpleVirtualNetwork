@@ -2,109 +2,139 @@
 #include <fcntl.h>
 #include <stdlib.h>
 #include <string.h>
-#include <android/log.h>
+#include <signal.h>
 #include "nativevpn.h"
 
-/**
- * https://cs.android.com/android/platform/superproject/main/+/main:frameworks/base/core/jni/android_app_NativeActivity.cpp;bpv=1;bpt=1?q=%20loadNativeCode
- * https://cs.android.com/android/platform/superproject/main/+/main:art/libnativeloader/native_loader.cpp;l=246;drc=ec89d38dce79c971ae089a174013f3ee90e41599
- * */
-
-
 struct global_data {
-    char* tmp_dir;
-    char* log_dir;
-    char* db_dir;
+    char *tmp_dir;
+    char *log_dir;
+    char *db_dir;
     JNIEnv *env;
     jobject thiz;
 };
+
 static struct global_data global_data = {0};
 
-void Java_ru_valishin_nativevpn_NativeVpn_closeFd(JNIEnv *env, jobject thiz, jint fd) {
-    close(fd);
+static void cleanup_global_data(JNIEnv *env) {
+    if (global_data.thiz) {
+        (*env)->DeleteGlobalRef(env, global_data.thiz);
+    }
+    free(global_data.tmp_dir);
+    free(global_data.log_dir);
+    free(global_data.db_dir);
+    memset(&global_data, 0, sizeof(global_data));
 }
 
-void Java_ru_valishin_nativevpn_NativeVpn_nativeStartVpnClient(JNIEnv *env,
-                                                           jobject thiz,
-                                                           jobjectArray args) {
+static jboolean init_globals(char **out, JNIEnv *env, jobject thiz, jstring dir) {
+    if (!out || !env || !dir) {
+        ERROR_LOG("Invalid parameters in init_globals");
+        return JNI_FALSE;
+    }
+
+    const char *nativeDir = (*env)->GetStringUTFChars(env, dir, NULL);
+    if (!nativeDir) {
+        ERROR_LOG("Failed to get native string");
+        return JNI_FALSE;
+    }
+
+    *out = strdup(nativeDir);
+    (*env)->ReleaseStringUTFChars(env, dir, nativeDir);
+
+    if (!*out) {
+        ERROR_LOG(MALLOC_ERROR);
+        return JNI_FALSE;
+    }
+
+    // Store env and create global reference only if not already initialized
+    if (!global_data.thiz) {
+        global_data.env = env;
+        global_data.thiz = (*env)->NewGlobalRef(env, thiz);
+        if (!global_data.thiz) {
+            ERROR_LOG("Failed to create global reference");
+            free(*out);
+            *out = NULL;
+            return JNI_FALSE;
+        }
+    }
+
+    return JNI_TRUE;
+}
+
+void Java_ru_valishin_nativevpn_NativeVpn_closeFd(JNIEnv *env, jobject thiz, jint fd) {
+    if (fd >= 0) {
+        close(fd);
+    }
+}
+
+void Java_ru_valishin_nativevpn_NativeVpn_nativeStartVpnClient(
+        JNIEnv *env, jobject thiz, jobjectArray args) {
+    if (!args) {
+        AndroidLog("Null arguments array received");
+        return;
+    }
 
     jsize argc = (*env)->GetArrayLength(env, args);
-    char **argv = (char **)malloc(sizeof(char *) * argc+1);
-
-    if (argv == NULL) {
-        // Handle memory allocation failure if needed
+    char **argv = calloc(argc + 1, sizeof(char *));
+    if (!argv) {
+        ERROR_LOG(MALLOC_ERROR);
+        return;
     }
-    for (jsize i = 0; i < argc; i++) {
+
+    jint result = -1;
+    jboolean success = JNI_TRUE;
+
+    for (jsize i = 0; i < argc && success; i++) {
         jstring arg = (jstring)(*env)->GetObjectArrayElement(env, args, i);
-        const char *nativeArg = (*env)->GetStringUTFChars(env, arg, 0);
-        argv[i] = strdup(nativeArg);
-        (*env)->ReleaseStringUTFChars(env, arg, nativeArg);
+        if (!arg) {
+            success = JNI_FALSE;
+            break;
+        }
+
+        const char *nativeArg = (*env)->GetStringUTFChars(env, arg, NULL);
+        if (nativeArg) {
+            argv[i] = strdup(nativeArg);
+            if (!argv[i]) {
+                ERROR_LOG(MALLOC_ERROR);
+                success = JNI_FALSE;
+            }
+            (*env)->ReleaseStringUTFChars(env, arg, nativeArg);
+        }
         (*env)->DeleteLocalRef(env, arg);
     }
-    argv[argc] = NULL;
 
-    jint result = VpnClientMain(argc, argv);
+    if (success) {
+        result = VpnClientMain(argc, argv);
+    }
 
     for (jsize i = 0; i < argc; i++) {
         free(argv[i]);
     }
     free(argv);
-
-    return;
 }
 
-extern char * GetAndroidTmpDir(){
-    return strdup(global_data.tmp_dir);
-}
-extern char * GetAndroidLogDir(){
-    return strdup(global_data.log_dir);
-}
-extern char * GetAndroidDbDir(){
-    return strdup(global_data.db_dir);
-}
-//TODO revert to previous version
-extern void AndroidLog(const char* tag, const char* fmt, ...) {
-    char newTag[128];
-    snprintf(newTag, sizeof(newTag), "NativeVPN: %s", tag);
-
-    va_list args;
-    va_start(args, fmt);
-
-    char message[4096];
-    vsnprintf(message, sizeof(message), fmt, args);
-
-    __android_log_print(ANDROID_LOG_DEBUG, newTag, "%s", message);
-
-    va_end(args);
+void Java_ru_valishin_nativevpn_NativeVpn_setTmpDir(JNIEnv *env, jobject thiz, jstring dir) {
+    init_globals(&global_data.tmp_dir, env, thiz, dir);
 }
 
-void signalHandler(int signal) {
-    // Handle the signal if needed
-}
-extern void AndroidPause() {
-    signal(SIGUSR1, signalHandler);
-    pause();
+void Java_ru_valishin_nativevpn_NativeVpn_setLogDir(JNIEnv *env, jobject thiz, jstring dir) {
+    init_globals(&global_data.log_dir, env, thiz, dir);
 }
 
-void init_globals(char** out,JNIEnv *env, jobject thiz, jstring dir) {
-    const char *nativeDir = (*env)->GetStringUTFChars(env, dir, 0);
-    *out = strdup(nativeDir);
-    (*env)->ReleaseStringUTFChars(env, dir, nativeDir);
-    (*env)->DeleteLocalRef(env, dir);
-    global_data.env = env;
-    global_data.thiz = thiz;
+void Java_ru_valishin_nativevpn_NativeVpn_setDbDir(JNIEnv *env, jobject thiz, jstring dir) {
+    init_globals(&global_data.db_dir, env, thiz, dir);
 }
 
-JNIEXPORT void JNICALL
-Java_ru_valishin_nativevpn_NativeVpn_setTmpDir(JNIEnv *env, jobject thiz, jstring dir) {
-    init_globals(&global_data.tmp_dir,env,thiz,dir);
+
+
+
+// Add JNI_OnLoad and JNI_OnUnload for proper initialization and cleanup
+jint JNI_OnLoad(JavaVM *vm, void *reserved) {
+    return JNI_VERSION_1_6;
 }
 
-JNIEXPORT void JNICALL
-Java_ru_valishin_nativevpn_NativeVpn_setLogDir(JNIEnv *env, jobject thiz, jstring dir) {
-    init_globals(&global_data.log_dir,env,thiz,dir);
-}
-JNIEXPORT void JNICALL
-Java_ru_valishin_nativevpn_NativeVpn_setDbDir(JNIEnv *env, jobject thiz, jstring dir) {
-    init_globals(&global_data.db_dir,env,thiz,dir);
+void JNI_OnUnload(JavaVM *vm, void *reserved) {
+    JNIEnv *env;
+    if ((*vm)->GetEnv(vm, (void **) &env, JNI_VERSION_1_6) == JNI_OK) {
+        cleanup_global_data(env);
+    }
 }

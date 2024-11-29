@@ -3,7 +3,8 @@
   <component name="ProjectMigrations">
     <option name="MigrateToGradleLocalJavaHome">
       <set>
-        <option value="/var/home/a/AndroidStudioProjects/VpnOverHttps" />
+        <option value="$PROJECT_DIR$/../../AndroidStudioProjects/VpnOverHttps" />
+        <option value="$PROJECT_DIR$" />
       </set>
     </option>
   </component>

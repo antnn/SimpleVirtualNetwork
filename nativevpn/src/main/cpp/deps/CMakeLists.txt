@@ -10,15 +10,17 @@ cmake_host_system_information(RESULT nproc
 set(NPROC ${nproc} CACHE INTERNAL "")
 
 #Keep in sync with ../CMakeLists.txt and ../build_deps.cmake
-set(A_PREFIX_PATH "${CMAKE_SOURCE_DIR}/external/root/${ANDROID_ABI}" CACHE INTERNAL "" )
-set(EXTERNAL_DIR "${CMAKE_SOURCE_DIR}/external" CACHE INTERNAL "" )
+#set(A_PREFIX_PATH "${CMAKE_SOURCE_DIR}/softether_third_party/root/${ANDROID_ABI}" CACHE INTERNAL "" )
+include(${CMAKE_CURRENT_SOURCE_DIR}/common.cmake)
 
+#set(SOFTETHER_THIRD_PARTY_DIR "${CMAKE_SOURCE_DIR}/softether_third_party" CACHE INTERNAL "" )
 
 #fix find_package
-list(APPEND CMAKE_PREFIX_PATH "${A_PREFIX_PATH}" )
-set(CMAKE_FIND_ROOT_PATH "${CMAKE_FIND_ROOT_PATH}" "${A_PREFIX_PATH}" )
+#list(APPEND CMAKE_PREFIX_PATH "${A_PREFIX_PATH}" )
+#set(CMAKE_FIND_ROOT_PATH "${CMAKE_FIND_ROOT_PATH}" "${A_PREFIX_PATH}" )
 #
-add_custom_target("deps_target")
+set(DEPS_TARGET "deps_target")
+add_custom_target(${DEPS_TARGET})
 
 
 function(log_error error command args dir )
@@ -41,11 +43,27 @@ function(build_external target src_dir)
         ExternalProject_add( ${target}
     ${ARGN} )
         add_custom_target(trigger_${target})
-        add_dependencies(deps_target ${target})
+        add_dependencies(trigger_${target} ${target})
     ")
-
     file(WRITE "${trigger_build_dir}/CMakeLists.txt" "${CMAKE_LIST_CONTENT}")
-    add_subdirectory("${trigger_build_dir}")
+
+    execute_process(COMMAND ${CMAKE_COMMAND} ${CMAKE_ARGS} .
+            WORKING_DIRECTORY ${trigger_build_dir}
+            RESULT_VARIABLE result
+            ERROR_VARIABLE error
+    )
+    if(NOT result EQUAL "0")
+        log_error("${error}" "${CMAKE_COMMAND}" "${CMAKE_ARGS}" "${trigger_build_dir}")
+    endif()
+
+    execute_process(COMMAND ${CMAKE_COMMAND} --build .
+            WORKING_DIRECTORY ${trigger_build_dir}
+            RESULT_VARIABLE result
+            ERROR_VARIABLE error
+    )
+    if(NOT result EQUAL "0")
+        log_error("${error}" "${CMAKE_COMMAND}" "--build ." "${trigger_build_dir}")
+    endif()
 
 endfunction()
 
@@ -93,10 +111,9 @@ STRIP=${ANDROID_TOOLCHAIN_ROOT}/bin/llvm-strip \
 PATH=${ANDROID_TOOLCHAIN_ROOT}/bin:$ENV{PATH} \
 ${env}")
 
-    set(lib_SOURCE_DIR "${EXTERNAL_DIR}/${project}")
-    set(ext_source_dir "${EXTERNAL_DIR}/build/${ANDROID_ABI}/${project}")
-    message(STATUS "INFO: BUILD_IN_SOURCE 1. Copy ${project} sources to make by ExternalProject\
-${ext_source_dir}")
+    set(lib_SOURCE_DIR "${SOFTETHER_THIRD_PARTY_DIR}/${project}")
+    set(ext_source_dir "${SOFTETHER_THIRD_PARTY_DIR}/build/${ANDROID_ABI}/${project}")
+    message(STATUS "INFO: BUILD_IN_SOURCE 1. Copy ${project} sources to make by ExternalProject to ${ext_source_dir}")
     file(COPY "${lib_SOURCE_DIR}" DESTINATION "${ext_source_dir}/..")
 
     build_external(
@@ -111,12 +128,11 @@ ${ext_source_dir}")
     )
 endfunction()
 
-function (build_external_cmake project env)
-    message(STATUS "Building external cmake project: ${project}")
-    set(lib_SOURCE_DIR "${EXTERNAL_DIR}/${project}")
-    set(ext_source_dir "${EXTERNAL_DIR}/build/${ANDROID_ABI}/${project}")
-    message(STATUS "INFO: BUILD_IN_SOURCE 1. Copy ${project} sources to make by ExternalProject \
-${ext_source_dir}")
+function (add_external_cmake project)
+    message(STATUS "Adding external cmake project: ${project}-${ANDROID_ABI}")
+    set(lib_SOURCE_DIR "${SOFTETHER_THIRD_PARTY_DIR}/${project}")
+    set(ext_source_dir "${SOFTETHER_THIRD_PARTY_DIR}/build/${ANDROID_ABI}/${project}")
+    message(STATUS "Copying ${project}-${ANDROID_ABI} sources to ${ext_source_dir}")
     file(COPY "${lib_SOURCE_DIR}" DESTINATION "${ext_source_dir}/..")
     add_subdirectory("${ext_source_dir}")
 endfunction()
@@ -152,45 +168,24 @@ IF(NOT SODIUM_FOUND)
 endif ()
 
 
-
-function(build_hamcorebuilder_on_host)
-    # workdir is output dir
-    message(STATUS "Building hamcorebuilder on host system and to add to PATH during vpnclient build")
-    execute_process(COMMAND /bin/bash "${DEPS_DIR}/hamcorebuilder.sh"
-            WORKING_DIRECTORY ${DEPS_DIR} )
-endfunction()
-
-
 find_library(lib_Mayaqua mayaqua)
 find_library(lib_Cedar cedar)
 find_library(lib_Hamcore hamcore.se2)
 find_library(lib_Vpnclient androidvpnclient)
 
 if(NOT lib_Mayaqua OR NOT lib_Cedar OR NOT lib_Hamcore OR NOT lib_Vpnclient)
-    build_hamcorebuilder_on_host()
-    message(STATUS "Replacing string 'hamcore.se' to 'hamcore.se.so'")
-    execute_process(  COMMAND  bash -c "find . -type f -name \"*\" -exec sed -i 's/hamcore\\.se2\\([^.\\]\\|\\$\\)/hamcore.se2.so\\1/g' {} +"
-            WORKING_DIRECTORY ${EXTERNAL_DIR}/SoftEtherVPN)
     set(softether_cmake_args ${CMAKE_ARGS} )
     list(APPEND softether_cmake_args "-DCMAKE_PREFIX_PATH=${A_PREFIX_PATH}"
             "-DCMAKE_FIND_ROOT_PATH=${A_PREFIX_PATH}" )
     #list(APPEND softether_cmake_args "-DCMAKE_FIND_ROOT_PATH=${A_PREFIX_PATH}" )
 
-    #path to hamcorebuilder
-    #name of a project is a child source dir
-    build_external_cmake(SoftEtherVPN
-            "PATH=${DEPS_DIR}:$ENV{PATH}"
-            ${softether_cmake_args} )
+    add_external_cmake(SoftEtherVPN)
 
-    #file(RENAME "${EXTERNAL_DIR}/build/${ANDROID_ABI}/SoftEtherVPN/vpnclient"
-    #        "${EXTERNAL_DIR}/build/${ANDROID_ABI}/SoftEtherVPN/libsoftethervpnclient.so"
-    #        )
-    file(GLOB SO_FILES "${EXTERNAL_DIR}/build/${ANDROID_ABI}/SoftEtherVPN/*.so")
+    file(GLOB SO_FILES "${SOFTETHER_THIRD_PARTY_DIR}/build/${ANDROID_ABI}/SoftEtherVPN/*.so")
     file(COPY ${SO_FILES} DESTINATION ${A_PREFIX_PATH}/lib)
-    file(COPY ${SO_FILES} DESTINATION ${MY_ANDROID_MODULE_DIR}/src/main/jniLibs/${ANDROID_ABI})
+    file(COPY ${SO_FILES} DESTINATION ${MY_JNI_LIBS_DIR}/${ANDROID_ABI})
 
     find_library(lib_Mayaqua libmayaqua)
-    #find_library(lib_Hamcore hamcore.se2)
     find_library(lib_Cedar libcedar)
     find_library(lib_vpnclient androidvpnclient)
 endif()

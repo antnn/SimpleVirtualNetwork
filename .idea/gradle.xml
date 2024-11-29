@@ -4,13 +4,27 @@
   <component name="GradleSettings">
     <option name="linkedExternalProjectsSettings">
       <GradleProjectSettings>
-        <option name="externalProjectPath" value="/var/home/a/AndroidStudioProjects/VpnOverHttps" />
+        <option name="testRunner" value="CHOOSE_PER_TEST" />
+        <option name="externalProjectPath" value="$PROJECT_DIR$/../../AndroidStudioProjects/VpnOverHttps" />
+        <option name="gradleJvm" value="#JAVA_HOME" />
+        <option name="modules">
+          <set>
+            <option value="$PROJECT_DIR$/../../AndroidStudioProjects/VpnOverHttps" />
+            <option value="$PROJECT_DIR$/../../AndroidStudioProjects/VpnOverHttps/app" />
+            <option value="$PROJECT_DIR$/../../AndroidStudioProjects/VpnOverHttps/nativevpn" />
+          </set>
+        </option>
+        <option name="resolveExternalAnnotations" value="false" />
+      </GradleProjectSettings>
+      <GradleProjectSettings>
+        <option name="testRunner" value="CHOOSE_PER_TEST" />
+        <option name="externalProjectPath" value="$PROJECT_DIR$" />
         <option name="gradleJvm" value="#GRADLE_LOCAL_JAVA_HOME" />
         <option name="modules">
           <set>
-            <option value="/var/home/a/AndroidStudioProjects/VpnOverHttps" />
-            <option value="/var/home/a/AndroidStudioProjects/VpnOverHttps/app" />
-            <option value="/var/home/a/AndroidStudioProjects/VpnOverHttps/nativevpn" />
+            <option value="$PROJECT_DIR$" />
+            <option value="$PROJECT_DIR$/app" />
+            <option value="$PROJECT_DIR$/nativevpn" />
           </set>
         </option>
         <option name="resolveExternalAnnotations" value="false" />

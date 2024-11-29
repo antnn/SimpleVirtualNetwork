@@ -13,7 +13,8 @@
 .externalNativeBuild
 .cxx
 local.properties
-/nativevpn/src/main/cpp/deps/external/
+/nativevpn/src/main/cpp/deps/softether_third_party/**
+/nativevpn/src/main/cpp/deps/build/**
 /nativevpn/src/main/cpp/deps/hamcorebuilder
 /nativevpn/src/main/res/raw/hamcore
 /nativevpn/src/main/jniLibs/

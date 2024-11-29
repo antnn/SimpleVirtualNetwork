@@ -2,11 +2,12 @@ cmake_minimum_required(VERSION 3.22.1)
 
 project("nativevpn")
 
+include(${CMAKE_SOURCE_DIR}/deps/common.cmake)
 #Keep in sync with deps/CMakeLists.txt and deps/build_deps.cmake
-set(A_PREFIX_PATH "${CMAKE_SOURCE_DIR}/deps/external/root/${ANDROID_ABI}" CACHE INTERNAL "" )
+#set(A_PREFIX_PATH "${CMAKE_SOURCE_DIR}/deps/softether_third_party/root/${ANDROID_ABI}" CACHE INTERNAL "" )
 #fix find_package
-list(APPEND CMAKE_PREFIX_PATH "${A_PREFIX_PATH}" )
-set(CMAKE_FIND_ROOT_PATH "${CMAKE_FIND_ROOT_PATH}" "${A_PREFIX_PATH}" )
+#list(APPEND CMAKE_PREFIX_PATH "${A_PREFIX_PATH}" )
+#set(CMAKE_FIND_ROOT_PATH "${CMAKE_FIND_ROOT_PATH}" "${A_PREFIX_PATH}" )
 #
 
 
