@@ -15,6 +15,7 @@ RUN apt-get update && apt-get install -y \
     python3 \
     git \
     perl \
+    build-essential \
     && rm -rf /var/lib/apt/lists/*
 
 # Download and install Android Command Line Tools
