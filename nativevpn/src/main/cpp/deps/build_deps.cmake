@@ -3,16 +3,14 @@ cmake_minimum_required(VERSION 3.30)
 # It sets up the environment, downloads and patches the required libraries, and compiles them
 # for multiple Android ABIs.
 
-set(BUILD "Release" CACHE STRING "Build type")
-set(MIN_SDK_VERSION 24 CACHE STRING "Minimum Android SDK version")
-set(NDK_VERSION "27.0.12077973" CACHE STRING "Android NDK version")
-
-# Library versions
-set(SOFTETHERVPN_VERSION "5.02.5187" CACHE STRING "SoftEtherVPN version")
-set(OPENSSL_VERSION "3.4.0" CACHE STRING "OpenSSL version")
-set(SODIUM_VERSION "1.0.20-RELEASE" CACHE STRING "libsodium version")
+set(BUILD "$ENV{BUILD_TYPE}" CACHE STRING "Build type")
+set(MIN_SDK_VERSION "$ENV{MIN_SDK_VERSION}" CACHE STRING "Minimum Android SDK version")
+set(SOFTETHERVPN_VERSION "$ENV{SOFTETHERVPN_VERSION}" CACHE STRING "SoftEtherVPN version")
+set(OPENSSL_VERSION "$ENV{OPENSSL_VERSION}" CACHE STRING "OpenSSL version")
+set(SODIUM_VERSION "$ENV{SODIUM_VERSION}" CACHE STRING "libsodium version")
 
 set(NDK "$ENV{ANDROID_NDK_ROOT}/$ENV{NDK_VERSION}" CACHE PATH "Android NDK path")
+
 # android_app_name/nativevpn/src/main/jniLibs/
 set(JNI_LIBS_DIR "${CMAKE_SOURCE_DIR}/../../jniLibs")
 set(EXTRA_ARGS "-DMY_JNI_LIBS_DIR=${JNI_LIBS_DIR}")
