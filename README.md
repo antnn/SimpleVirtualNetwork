@@ -1,6 +1,6 @@
 
 ```bash
-#now broken
+#now build is broken
 #docker build . -t buildcontainer
 #docker run --rm -it buildcontainer
 CMAKE_DIR="/opt/android-sdk/cmake"
