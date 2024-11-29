@@ -1,6 +1,7 @@
 
 ```bash
 #docker build . -t buildcontainer
+#docker run --rm -it buildcontainer
 CMAKE_DIR="/opt/android-sdk/cmake"
 LATEST_CMAKE=$(ls -d $CMAKE_DIR/*/ | sort -V | tail -n 1)
 CMAKE_BIN="$LATEST_CMAKE/bin/cmake"
