@@ -1,6 +1,6 @@
 
 ```bash
-#build is partially working
+#build is partially working (openssl, libsodium)
 #docker build . -t buildcontainer
 #docker run --rm -it buildcontainer
 CMAKE_DIR="/opt/android-sdk/cmake"
