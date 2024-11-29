@@ -17,7 +17,7 @@ ARG NDK_VERSION="27.0.12077973" \
 
 
 RUN apt-get update && apt-get install -y \
-    wget unzip openjdk-17-jdk python3 git perl 
+    wget unzip openjdk-17-jdk python3 git perl \
     build-essential pkg-config \
     && rm -rf /var/lib/apt/lists/*
 
