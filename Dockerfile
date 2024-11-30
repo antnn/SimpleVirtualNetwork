@@ -15,9 +15,11 @@ ENV NDK_VERSION="27.0.12077973" \
     PATH="${ANDROID_HOME}/cmake/${CMAKE_VERSION}/bin:${ANDROID_HOME}/cmdline-tools/bin:${PATH}"
 
 
-# Although we don't use the host compiler for the actual build,
-# CMake requires a working host compiler and development libraries for its configuration tests
-# before switching to the Android NDK toolchain for the actual build
+# Even though the host compiler is not used for the actual build process,
+# CMake needs a functional host compiler and development libraries to perform its configuration tests
+# before transitioning to the Android NDK toolchain for the actual build.
+# This requirement arises because we utilize CMake's ExternalProject functionality,
+# where the main project, which includes and initiates the external build, relies on the host configuration.
 RUN apt-get update && apt-get install -y \
     wget unzip openjdk-17-jdk python3 git perl \
     build-essential pkg-config \
