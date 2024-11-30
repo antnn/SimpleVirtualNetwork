@@ -1,5 +1,5 @@
 ```bash
-without container
+# without container
 export NDK_VERSION="27.0.12077973"
 export CMAKE_VERSION="3.30.5"
 export ANDROID_VERSION="35"
