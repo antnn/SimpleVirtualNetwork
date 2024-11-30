@@ -5,6 +5,11 @@
 #include <signal.h>
 #include "nativevpn.h"
 
+
+inline int entrypoint(int argc, char *argv[]){
+    return VpnClientMain(argc, argv);
+}
+
 struct global_data {
     char *tmp_dir;
     char *log_dir;
@@ -103,7 +108,7 @@ void Java_ru_valishin_nativevpn_NativeVpn_nativeStartVpnClient(
     }
 
     if (success) {
-        result = VpnClientMain(argc, argv);
+        result = entrypoint(argc, argv);
     }
 
     for (jsize i = 0; i < argc; i++) {
