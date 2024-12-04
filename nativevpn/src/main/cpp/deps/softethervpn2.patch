@@ -35,7 +35,7 @@ index 45bab426..481fdf8b 100644
  
  			ret = CopyStrToUni(s);
 diff --git a/src/Mayaqua/FileIO.c b/src/Mayaqua/FileIO.c
-index 5e4b9c97..135b3a83 100644
+index 5e4b9c97..304ee1fe 100644
 --- a/src/Mayaqua/FileIO.c
 +++ b/src/Mayaqua/FileIO.c
 @@ -19,6 +19,9 @@
@@ -48,48 +48,54 @@ index 5e4b9c97..135b3a83 100644
  
  static char exe_file_name[MAX_SIZE] = "/tmp/a.out";
  static wchar_t exe_file_name_w[MAX_SIZE] = L"/tmp/a.out";
-@@ -876,7 +879,10 @@ void GetExeDir(char *name, UINT size)
+@@ -876,7 +879,11 @@ void GetExeDir(char *name, UINT size)
  	{
  		return;
  	}
 -
 +	#ifdef __ANDROID__
-+	name = GetAndroidTmpDir();
++	char* tmp = GetAndroidTmpDir();
++	StrCpy(name, size, tmp);
 +	size = StrLen(name);
 +    #endif
  	GetDirNameFromFilePath(name, size, exe_file_name);
  }
  void GetExeDirW(wchar_t *name, UINT size)
-@@ -916,6 +922,9 @@ void GetLogDir(char *name, UINT size)
+@@ -916,6 +923,9 @@ void GetLogDir(char *name, UINT size)
  {
  #ifdef SE_LOGDIR
  	Format(name, size, SE_LOGDIR);
 +#elif __ANDROID__
-+	 name = GetAndroidLogDir();
-+	 size = StrSize(name);
++	 char* tmp = GetAndroidLogDir();
++	 StrCpy(name, size, tmp);
  #else
  	GetExeDir(name, size);
  #endif
-@@ -934,6 +943,9 @@ void GetDbDir(char *name, UINT size)
+@@ -934,6 +944,9 @@ void GetDbDir(char *name, UINT size)
  {
  #ifdef SE_DBDIR
  	Format(name, size, SE_DBDIR);
 +#elif __ANDROID__
-+	 name = GetAndroidDbDir();
-+	 size = StrSize(name);
++	  char* tmp = GetAndroidDbDir();
++	  StrCpy(name, size, tmp);
  #else
  	GetExeDir(name, size);
  #endif
-@@ -952,6 +964,9 @@ void GetPidDir(char *name, UINT size)
+@@ -951,9 +964,12 @@ void GetDbDirW(wchar_t *name, UINT size)
+ void GetPidDir(char *name, UINT size)
  {
  #ifdef SE_PIDDIR
- 	Format(name, size, SE_PIDDIR);
+-	Format(name, size, SE_PIDDIR);
++    Format(name, size, SE_PIDDIR);
 +#elif __ANDROID__
-+	 name = GetAndroidTmpDir();
-+	 size = StrSize(name);
++    char* tmp = GetAndroidTmpDir();
++    StrCpy(name, size, tmp);  // Copy the string to the provided buffer
  #else
- 	GetExeDir(name, size);
+-	GetExeDir(name, size);
++    GetExeDir(name, size);
  #endif
+ }
+ 
 diff --git a/src/Mayaqua/Mayaqua.c b/src/Mayaqua/Mayaqua.c
 index 86492751..135b0347 100644
 --- a/src/Mayaqua/Mayaqua.c
