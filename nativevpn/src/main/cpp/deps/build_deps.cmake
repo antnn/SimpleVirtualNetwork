@@ -87,12 +87,11 @@ function(build_hamcorebuilder_on_host OUTPUT_DIR)
             -DCMAKE_BUILD_TYPE=${BUILD}
             -DCMAKE_C_FLAGS=${MY_COMP_FLAGS}
             -DCMAKE_EXE_LINKER_FLAGS=${MY_LINK_FLAGS}
-            -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON
             -S "${DIR}/src/hamcorebuilder"
             -B "${OUTPUT_DIR}/hb"
     )
     execute_process(
-            COMMAND ${CMAKE_COMMAND} --build .
+            COMMAND ${CMAKE_COMMAND}  --build .
             WORKING_DIRECTORY "${OUTPUT_DIR}/hb"
     )
 
