@@ -15,9 +15,6 @@ set(NDK "$ENV{ANDROID_NDK_ROOT}" CACHE PATH "Android NDK path")
 set(JNI_LIBS_DIR "${CMAKE_SOURCE_DIR}/../../jniLibs")
 set(EXTRA_ARGS "-DMY_JNI_LIBS_DIR=${JNI_LIBS_DIR}")
 
-#if(NOT EXISTS "${ANDROID_MODULE_DIR}")
-#    message(FATAL_ERROR "Android module directory not found: ${ANDROID_MODULE_DIR}")
-#endif()
 
 
 function(clone_if_not_exists repo_url branch target_dir)
@@ -68,89 +65,84 @@ endfunction()
 
 
 function(build_hamcorebuilder_on_host OUTPUT_DIR)
-    # hamcore.se2 is arch-independent file
-    execute_process( COMMAND
-            bash -c "find . -type f -name \"*\" -exec sed -i 's/hamcore\\.se2\\([^.\\]\\|\\$\\)/hamcore.se2.so\\1/g' {} +"
-            WORKING_DIRECTORY "${SOFTETHER_THIRD_PARTY_DIR}/SoftEtherVPN")
-    file(MAKE_DIRECTORY ${OUTPUT_DIR})
+    set(DIR "${CMAKE_SOURCE_DIR}/softether_third_party/SoftEtherVPN")
 
-    file(COPY SoftEtherVPN DESTINATION ${OUTPUT_DIR})
-
-    file(READ "${OUTPUTDIR}/SoftEtherVPN/src/CMakeLists.txt" CMAKELIST_CONTENT)
-
-    string(REGEX REPLACE "(add_subdirectory\\(Mayaqua\\))" "#\\1" CMAKELIST_CONTENT "${CMAKELIST_CONTENT}")
-    string(REGEX REPLACE "(add_subdirectory\\(Cedar\\))" "#\\1" CMAKELIST_CONTENT "${CMAKELIST_CONTENT}")
-    string(REGEX REPLACE "(add_subdirectory\\(vpnserver\\))" "#\\1" CMAKELIST_CONTENT "${CMAKELIST_CONTENT}")
-    string(REGEX REPLACE "(add_subdirectory\\(vpnclient\\))" "#\\1" CMAKELIST_CONTENT "${CMAKELIST_CONTENT}")
-    string(REGEX REPLACE "(add_subdirectory\\(vpnbridge\\))" "#\\1" CMAKELIST_CONTENT "${CMAKELIST_CONTENT}")
-    string(REGEX REPLACE "(add_subdirectory\\(vpncmd\\))" "#\\1" CMAKELIST_CONTENT "${CMAKELIST_CONTENT}")
-    string(REGEX REPLACE "(add_subdirectory\\(vpntest\\))" "#\\1" CMAKELIST_CONTENT "${CMAKELIST_CONTENT}")
-
-    string(REGEX REPLACE "(add_custom_target\\(hamcore-archive-build[\\s\\S]*?\\))" "#\\1" CMAKELIST_CONTENT "${CMAKE_CONTENT}")
-
-    file(WRITE "${OUTPUTDIR}/SoftEtherVPN/src/CMakeLists.txt" "${CMAKELIST_CONTENT}")
-
+    # Build libhamcore on host
+    file(MAKE_DIRECTORY "${OUTPUT_DIR}/libhamcore")
     execute_process(
-            COMMAND ./configure
-            WORKING_DIRECTORY ${OUTPUT_DIR}/SoftEtherVPN
+            COMMAND ${CMAKE_COMMAND} "${DIR}/src/libhamcore"
+            WORKING_DIRECTORY "${OUTPUT_DIR}/libhamcore"
     )
     execute_process(
-            COMMAND make -C build -j${NPROC}
-            WORKING_DIRECTORY ${OUTPUTDIR}/SoftEtherVPN
+            COMMAND ${CMAKE_COMMAND} --build .
+            WORKING_DIRECTORY "${OUTPUT_DIR}/libhamcore"
     )
 
-    # Copy the built hamcorebuilder to PATH
-    file(COPY ${OUTPUT_DIR}/SoftEtherVPN/build/src/hamcorebuilder/hamcorebuilder
-            DESTINATION ${OUTPUT_DIR})
+# Build hamcorebuilder
+    file(MAKE_DIRECTORY "${OUTPUT_DIR}/hb")
+    string(REPLACE ";" " " COMP_FLAGS "-I${DIR}/src/libhamcore/include/ -I${DIR}/3rdparty/tinydir")
+    string(REPLACE ";" " " LINK_FLAGS "-L${OUTPUT_DIR}/libhamcore -lz")
+    execute_process(
+            COMMAND ${CMAKE_COMMAND}
+            -DCMAKE_C_FLAGS=${COMP_FLAGS}
+            -DCMAKE_EXE_LINKER_FLAGS=${LINK_FLAGS}
+            -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON
+            -S "${DIR}/src/hamcorebuilder"
+            -B "${OUTPUT_DIR}/hb"
+    )
+    execute_process(
+            COMMAND ${CMAKE_COMMAND} --build .
+            WORKING_DIRECTORY "${OUTPUT_DIR}/hb"
+    )
 
+    # Run hamcorebuilder to produce hamcore.se2
+    execute_process(
+            COMMAND "${OUTPUT_DIR}/hb/hamcorebuilder" "hamcore.se2" "${DIR}/src/bin/hamcore"
+            WORKING_DIRECTORY "${OUTPUT_DIR}"
+    )
 endfunction()
-build_hamcorebuilder_on_host()
+build_hamcorebuilder_on_host("${CMAKE_SOURCE_DIR}/softether_third_party/build")
+
 
 
 function(patch_softether DIR)
-    file(READ "${DIR}/src/CMakeLists.txt" CMAKELIST_CONTENT)
-    string(REGEX REPLACE "(add_subdirectory\\(vpnserver\\))" "#\\1" CMAKELIST_CONTENT "${CMAKELIST_CONTENT}")
-    string(REGEX REPLACE "(add_subdirectory\\(vpnbridge\\))" "#\\1" CMAKELIST_CONTENT "${CMAKELIST_CONTENT}")
-    string(REGEX REPLACE "(add_subdirectory\\(vpncmd\\))" "#\\1" CMAKELIST_CONTENT "${CMAKELIST_CONTENT}")
-    string(REGEX REPLACE "(add_subdirectory\\(vpntest\\))" "#\\1" CMAKELIST_CONTENT "${CMAKELIST_CONTENT}")
-    string(REGEX REPLACE "(add_subdirectory\\(libhamcore\\))" "#\\1" CMAKELIST_CONTENT "${CMAKELIST_CONTENT}")
-    string(REGEX REPLACE "(add_subdirectory\\(hamcorebuilder\\))" "#\\1" CMAKELIST_CONTENT "${CMAKELIST_CONTENT}")
-    string(REGEX REPLACE "(add_custom_target\\(hamcore-archive-build[^)]*\\))" "#\\1" CMAKELIST_CONTENT "${CMAKELIST_CONTENT}")
-
-    file(WRITE "${DIR}/src/CMakeLists.txt" "${CMAKELIST_CONTENT}")
 endfunction()
-
 patch_softether(${CMAKE_SOURCE_DIR}/softether_third_party/SoftEtherVPN)
 
-message(STATUS "Building dependencies for SoftEtherVPN")
-set(ABIs "arm64-v8a" "armeabi-v7a" "x86" "x86_64")
-foreach (ANDROID_ABI ${ABIs})
-    message("Configuring for ABI: ${ANDROID_ABI}")
-    include(${CMAKE_SOURCE_DIR}/common.cmake)
-    #set(A_PREFIX_PATH "${CMAKE_SOURCE_DIR}/softether_third_party/root/${ANDROID_ABI}" CACHE INTERNAL "" )
 
-    set(BUILD_DIR "build/${ANDROID_ABI}")
-    file(MAKE_DIRECTORY "${BUILD_DIR}")
 
-    execute_process(
-            COMMAND ${CMAKE_COMMAND}
-            -DCMAKE_BUILD_TYPE=${BUILD}
-            -DCMAKE_TOOLCHAIN_FILE=${NDK}/build/cmake/android.toolchain.cmake
-            -DANDROID_ABI=${ANDROID_ABI}
-            -DANDROID_PLATFORM=android-${MIN_SDK_VERSION}
-            ${EXTRA_ARGS}
-            -B ${BUILD_DIR}
-            WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-    )
-    #WORKING_DIRECTORY ${BUILD_DIR}/../../
+function(build_deps)
+    message(STATUS "Building dependencies for SoftEtherVPN")
+    set(ABIs "arm64-v8a" "armeabi-v7a" "x86" "x86_64")
+    foreach (ANDROID_ABI ${ABIs})
+        message("Configuring for ABI: ${ANDROID_ABI}")
+        include(${CMAKE_SOURCE_DIR}/common.cmake)
+        #set(A_PREFIX_PATH "${CMAKE_SOURCE_DIR}/softether_third_party/root/${ANDROID_ABI}" CACHE INTERNAL "" )
 
-    message("Building for ABI: ${ANDROID_ABI}")
-    execute_process(
-            COMMAND ${CMAKE_COMMAND} --build .
-            WORKING_DIRECTORY ${BUILD_DIR}
-    )
+        set(BUILD_DIR "build/${ANDROID_ABI}")
+        file(MAKE_DIRECTORY "${BUILD_DIR}")
 
-    message(STATUS "Libraries are installed at: ${A_PREFIX_PATH}")
+        execute_process(
+                COMMAND ${CMAKE_COMMAND}
+                -DCMAKE_BUILD_TYPE=${BUILD}
+                -DCMAKE_TOOLCHAIN_FILE=${NDK}/build/cmake/android.toolchain.cmake
+                -DANDROID_ABI=${ANDROID_ABI}
+                -DANDROID_PLATFORM=android-${MIN_SDK_VERSION}
+                ${EXTRA_ARGS}
+                -B ${BUILD_DIR}
+                WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        )
+        #WORKING_DIRECTORY ${BUILD_DIR}/../../
 
-endforeach ()
+        message("Building for ABI: ${ANDROID_ABI}")
+        execute_process(
+                COMMAND ${CMAKE_COMMAND} --build .
+                WORKING_DIRECTORY ${BUILD_DIR}
+        )
 
+        message(STATUS "Libraries are installed at: ${A_PREFIX_PATH}")
+
+    endforeach ()
+endfunction()
+
+build_deps()
