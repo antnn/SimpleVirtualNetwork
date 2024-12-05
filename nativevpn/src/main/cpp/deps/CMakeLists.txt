@@ -23,15 +23,6 @@ set(DEPS_TARGET "deps_target")
 add_custom_target(${DEPS_TARGET})
 
 
-function(log_error error command args dir )
-    string(REPLACE ";" "\\ " command_print "${command}")
-    string(REPLACE ";" "\\ " args_print "${args}")
-    message (SEND_ERROR "BUILD FAILED AT: ${dir}")
-    message (SEND_ERROR "COMMAND: ${command_print}\n WITH ARGS: ${args_print}")
-    message(FATAL_ERROR "Function Build_external command output:\n\
-    ${error}")
-endfunction()
-
 function(build_external target src_dir)
     message(STATUS "Building external project: ${target} in: ${src_dir} ")
     set(trigger_build_dir "${src_dir}")
@@ -170,10 +161,9 @@ endif ()
 
 find_library(lib_Mayaqua mayaqua)
 find_library(lib_Cedar cedar)
-find_library(lib_Hamcore hamcore.se2)
 find_library(lib_Vpnclient androidvpnclient)
 
-if(NOT lib_Mayaqua OR NOT lib_Cedar OR NOT lib_Hamcore OR NOT lib_Vpnclient)
+if(NOT lib_Mayaqua OR NOT lib_Cedar OR NOT lib_Vpnclient)
     set(softether_cmake_args ${CMAKE_ARGS} )
     list(APPEND softether_cmake_args "-DCMAKE_PREFIX_PATH=${A_PREFIX_PATH}"
             "-DCMAKE_FIND_ROOT_PATH=${A_PREFIX_PATH}" )

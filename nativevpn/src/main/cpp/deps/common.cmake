@@ -4,3 +4,12 @@ set(SOFTETHER_THIRD_PARTY_ROOT "${SOFTETHER_THIRD_PARTY_DIR}/root")
 set(A_PREFIX_PATH "${SOFTETHER_THIRD_PARTY_ROOT}/${ANDROID_ABI}" CACHE INTERNAL "")
 list(APPEND CMAKE_PREFIX_PATH "${A_PREFIX_PATH}" )
 list(APPEND CMAKE_FIND_ROOT_PATH "${A_PREFIX_PATH}" )
+
+function(log_error error command args dir )
+    string(REPLACE ";" "\\ " command_print "${command}")
+    string(REPLACE ";" "\\ " args_print "${args}")
+    message (SEND_ERROR "FAILED AT: ${dir}")
+    message (SEND_ERROR "COMMAND: ${command_print}\n WITH ARGS: ${args_print}")
+    message(FATAL_ERROR "Function command output:\n\
+    ${error}")
+endfunction()

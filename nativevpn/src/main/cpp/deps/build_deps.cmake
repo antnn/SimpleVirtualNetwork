@@ -58,11 +58,6 @@ if(EXISTS "${SOFTETHER_THIRD_PARTY_DIR}/SoftEtherVPN")
     )
 endif()
 
-function(log_error error)
-    message(FATAL_ERROR "Function Build_external command output:\n\
-    ${error}")
-endfunction()
-
 
 function(build_hamcorebuilder_on_host OUTPUT_DIR)
     set(DIR "${CMAKE_SOURCE_DIR}/softether_third_party/SoftEtherVPN")
@@ -72,36 +67,67 @@ function(build_hamcorebuilder_on_host OUTPUT_DIR)
     execute_process(
             COMMAND ${CMAKE_COMMAND} -DCMAKE_BUILD_TYPE=${BUILD} "${DIR}/src/libhamcore"
             WORKING_DIRECTORY "${OUTPUT_DIR}/libhamcore"
+            RESULT_VARIABLE result
+            ERROR_VARIABLE error
     )
+    if(NOT result EQUAL "0")
+        log_error("${error}" "${CMAKE_COMMAND}" -DCMAKE_BUILD_TYPE=${BUILD} "${OUTPUT_DIR}/libhamcore")
+    endif()
     execute_process(
             COMMAND ${CMAKE_COMMAND} --build .
             WORKING_DIRECTORY "${OUTPUT_DIR}/libhamcore"
+            RESULT_VARIABLE result
+            ERROR_VARIABLE error
     )
+    if(NOT result EQUAL "0")
+        log_error("${error}" "${CMAKE_COMMAND}" "--build ."  "${OUTPUT_DIR}/libhamcore")
+    endif()
 
     # Build hamcorebuilder
     file(MAKE_DIRECTORY "${OUTPUT_DIR}/hb")
     string(REPLACE ";" " " MY_COMP_FLAGS "-I${DIR}/src/libhamcore/include/ -I${DIR}/3rdparty/tinydir")
     string(REPLACE ";" " " MY_LINK_FLAGS "-L${OUTPUT_DIR}/libhamcore -lz")
-    execute_process(
-            COMMAND ${CMAKE_COMMAND}
+    execute_process(COMMAND ${CMAKE_COMMAND}
             -DCMAKE_BUILD_TYPE=${BUILD}
             -DCMAKE_C_FLAGS=${MY_COMP_FLAGS}
             -DCMAKE_EXE_LINKER_FLAGS=${MY_LINK_FLAGS}
             -S "${DIR}/src/hamcorebuilder"
             -B "${OUTPUT_DIR}/hb"
+            RESULT_VARIABLE result
+            ERROR_VARIABLE error
     )
+    if(NOT result EQUAL "0")
+        log_error("${error}" "${CMAKE_COMMAND}" "-DCMAKE_BUILD_TYPE=${BUILD}
+            -DCMAKE_C_FLAGS=${MY_COMP_FLAGS}
+            -DCMAKE_EXE_LINKER_FLAGS=${MY_LINK_FLAGS}
+            -S \"${DIR}/src/hamcorebuilder\"
+            -B \"${OUTPUT_DIR}/hb\"" "${DIR}/src/hamcorebuilder" )
+    endif()
     execute_process(
-            COMMAND ${CMAKE_COMMAND}  --build .
+            COMMAND ${CMAKE_COMMAND} --build .
             WORKING_DIRECTORY "${OUTPUT_DIR}/hb"
+            RESULT_VARIABLE result
+            ERROR_VARIABLE error
     )
+    if(NOT result EQUAL "0")
+        log_error("${error}" "${CMAKE_COMMAND}" "--build ." "${OUTPUT_DIR}/hb")
+    endif()
 
-    # Run hamcorebuilder to produce hamcore.se2
+    # Run hamcorebuilder to produce hamcore.se2 (no-arch)
     execute_process(
             COMMAND "${OUTPUT_DIR}/hb/hamcorebuilder" "hamcore.se2" "${DIR}/src/bin/hamcore"
             WORKING_DIRECTORY "${OUTPUT_DIR}"
+            RESULT_VARIABLE result
     )
+    if (NOT result EQUAL "0")
+        message(FATAL_ERROR "Failed to compile hamcore.se2 \n CMD: \"${OUTPUT_DIR}/hb/hamcorebuilder\" \"hamcore.se2\" \"${DIR}/src/bin/hamcore\"")
+    endif ()
 endfunction()
-build_hamcorebuilder_on_host("${CMAKE_SOURCE_DIR}/softether_third_party/build")
+
+include(${CMAKE_SOURCE_DIR}/common.cmake)
+
+set(HAMCORE_SE2 "${CMAKE_SOURCE_DIR}/softether_third_party/build")
+build_hamcorebuilder_on_host(${HAMCORE_SE2})
 
 
 
@@ -117,13 +143,12 @@ function(build_deps)
     foreach (ANDROID_ABI ${ABIs})
         message("Configuring for ABI: ${ANDROID_ABI}")
         include(${CMAKE_SOURCE_DIR}/common.cmake)
-        #set(A_PREFIX_PATH "${CMAKE_SOURCE_DIR}/softether_third_party/root/${ANDROID_ABI}" CACHE INTERNAL "" )
 
         set(BUILD_DIR "build/${ANDROID_ABI}")
         file(MAKE_DIRECTORY "${BUILD_DIR}")
 
         execute_process(
-                COMMAND ${CMAKE_COMMAND}
+                COMMAND ${CMAKE_COMMAND} -E env HAMCORE_SE2=${HAMCORE_SE2} ${CMAKE_COMMAND}
                 -DCMAKE_BUILD_TYPE=${BUILD}
                 -DCMAKE_TOOLCHAIN_FILE=${NDK}/build/cmake/android.toolchain.cmake
                 -DANDROID_ABI=${ANDROID_ABI}
@@ -132,7 +157,6 @@ function(build_deps)
                 -B ${BUILD_DIR}
                 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
         )
-        #WORKING_DIRECTORY ${BUILD_DIR}/../../
 
         message("Building for ABI: ${ANDROID_ABI}")
         execute_process(
