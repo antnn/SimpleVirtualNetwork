@@ -80,13 +80,13 @@ function(build_hamcorebuilder_on_host OUTPUT_DIR)
 
     # Build hamcorebuilder
     file(MAKE_DIRECTORY "${OUTPUT_DIR}/hb")
-    string(REPLACE ";" " " COMP_FLAGS "-I${DIR}/src/libhamcore/include/ -I${DIR}/3rdparty/tinydir")
-    string(REPLACE ";" " " LINK_FLAGS "-L${OUTPUT_DIR}/libhamcore -lz")
+    string(REPLACE ";" " " MY_COMP_FLAGS "-I${DIR}/src/libhamcore/include/ -I${DIR}/3rdparty/tinydir")
+    string(REPLACE ";" " " MY_LINK_FLAGS "-L${OUTPUT_DIR}/libhamcore -lz")
     execute_process(
             COMMAND ${CMAKE_COMMAND}
             -DCMAKE_BUILD_TYPE=${BUILD}
-            -DCMAKE_C_FLAGS=${COMP_FLAGS}
-            -DCMAKE_EXE_LINKER_FLAGS=${LINK_FLAGS}
+            -DCMAKE_C_FLAGS=${MY_COMP_FLAGS}
+            -DCMAKE_EXE_LINKER_FLAGS=${MY_LINK_FLAGS}
             -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON
             -S "${DIR}/src/hamcorebuilder"
             -B "${OUTPUT_DIR}/hb"
