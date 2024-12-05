@@ -70,7 +70,7 @@ function(build_hamcorebuilder_on_host OUTPUT_DIR)
     # Build libhamcore on host
     file(MAKE_DIRECTORY "${OUTPUT_DIR}/libhamcore")
     execute_process(
-            COMMAND ${CMAKE_COMMAND} "${DIR}/src/libhamcore"
+            COMMAND ${CMAKE_COMMAND} -DCMAKE_BUILD_TYPE=${BUILD} "${DIR}/src/libhamcore"
             WORKING_DIRECTORY "${OUTPUT_DIR}/libhamcore"
     )
     execute_process(
@@ -78,12 +78,13 @@ function(build_hamcorebuilder_on_host OUTPUT_DIR)
             WORKING_DIRECTORY "${OUTPUT_DIR}/libhamcore"
     )
 
-# Build hamcorebuilder
+    # Build hamcorebuilder
     file(MAKE_DIRECTORY "${OUTPUT_DIR}/hb")
     string(REPLACE ";" " " COMP_FLAGS "-I${DIR}/src/libhamcore/include/ -I${DIR}/3rdparty/tinydir")
     string(REPLACE ";" " " LINK_FLAGS "-L${OUTPUT_DIR}/libhamcore -lz")
     execute_process(
             COMMAND ${CMAKE_COMMAND}
+            -DCMAKE_BUILD_TYPE=${BUILD}
             -DCMAKE_C_FLAGS=${COMP_FLAGS}
             -DCMAKE_EXE_LINKER_FLAGS=${LINK_FLAGS}
             -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON
@@ -145,4 +146,4 @@ function(build_deps)
     endforeach ()
 endfunction()
 
-build_deps()
+#build_deps()
