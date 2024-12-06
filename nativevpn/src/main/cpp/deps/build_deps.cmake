@@ -174,17 +174,18 @@ include(${CMAKE_SOURCE_DIR}/common.cmake)
 set(HAMCORE_SE2 "${CMAKE_SOURCE_DIR}/softether_third_party/build")
 build_hamcorebuilder_on_host(${HAMCORE_SE2})
 
+function(patch_softether DIR)
+execute_process(
+        COMMAND git apply  ${CMAKE_SOURCE_DIR}/softethervpn2.patch
+        WORKING_DIRECTORY ${DIR}
+)
+endfunction()
+patch_softether(${CMAKE_SOURCE_DIR}/softether_third_party/SoftEtherVPN)
 
-#function(patch_softether DIR)
-#endfunction()
-#patch_softether(${CMAKE_SOURCE_DIR}/softether_third_party/SoftEtherVPN)
-
-
-# "armeabi-v7a" "x86" "x86_64"
 
 function(build_deps)
     message(STATUS "Building dependencies for SoftEtherVPN")
-    set(ABIs "arm64-v8a" )
+    set(ABIs "arm64-v8a" "armeabi-v7a" "x86" "x86_64")
     foreach (ANDROID_ABI ${ABIs})
         message("Configuring for ABI: ${ANDROID_ABI}")
         include(${CMAKE_SOURCE_DIR}/common.cmake)
@@ -200,9 +201,9 @@ function(build_deps)
                 -DANDROID_PLATFORM=android-${MIN_SDK_VERSION}
                 -DCMAKE_INSTALL_PREFIX=${A_PREFIX_PATH}
                 -DCMAKE_PREFIX_PATH=${A_PREFIX_PATH} -DCMAKE_FIND_ROOT_PATH=${A_PREFIX_PATH}
-                -DCURSES_LIBRARY="${A_PREFIX_PATH}" -DCURSES_INCLUDE_PATH="${A_PREFIX_PATH}"
-                -DLIB_READLINE="${A_PREFIX_PATH}"
-                -DCMAKE_C_FLAGS="-I${CMAKE_CURRENT_SOURCE_DIR}/../include"
+                -DCURSES_LIBRARY=${A_PREFIX_PATH} -DCURSES_INCLUDE_PATH=${A_PREFIX_PATH}
+                -DLIB_READLINE=${A_PREFIX_PATH}
+                -DCMAKE_C_FLAGS=-I${CMAKE_CURRENT_SOURCE_DIR}/../include
                 ${EXTRA_ARGS}
                 -B ${BUILD_DIR}
                 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
@@ -210,7 +211,7 @@ function(build_deps)
 
         message("Building for ABI: ${ANDROID_ABI}")
         execute_process(
-                COMMAND ${CMAKE_COMMAND} --build .
+                COMMAND ${CMAKE_COMMAND} --build . -j${NPROC}
                 WORKING_DIRECTORY ${BUILD_DIR}
         )
 

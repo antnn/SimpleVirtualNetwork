@@ -1,81 +1,57 @@
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index 8b495b69..45d8789c 100644
+index 0a622ab..45d8789 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
-@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.15)
- set(BUILD_NUMBER CACHE STRING "The number of the current build.")
- 
- if ("${BUILD_NUMBER}" STREQUAL "")
--	set(BUILD_NUMBER "5186")
-+	set(BUILD_NUMBER "5187")
- endif()
- 
- if (BUILD_NUMBER LESS 5180)
 @@ -27,8 +27,8 @@ project("SoftEther VPN"
- 
+
  set(CMAKE_C_STANDARD 99)
- 
+
 -set(TOP_DIRECTORY ${CMAKE_SOURCE_DIR})
 -set(BUILD_DIRECTORY ${CMAKE_BINARY_DIR})
 +set(TOP_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 +set(BUILD_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${CMAKE_CURRENT_BINARY_DIR})
- 
+
  # We define a dedicated variable because CMAKE_BUILD_TYPE can have different
  # configurations than "Debug" and "Release", such as "RelWithDebInfo".
-diff --git a/CMakeSettings.json b/CMakeSettings.json
-index 9853e477..4817c860 100644
---- a/CMakeSettings.json
-+++ b/CMakeSettings.json
-@@ -1,5 +1,5 @@
- ﻿{
--  "environments": [ { "BuildNumber": "5186" } ],
-+  "environments": [ { "BuildNumber": "5187" } ],
-   "configurations": [
-     {
-       "name": "x64-native",
 diff --git a/src/CMakeLists.txt b/src/CMakeLists.txt
-index c49a3c78..a7721b61 100644
+index c49a3c7..7061482 100644
 --- a/src/CMakeLists.txt
 +++ b/src/CMakeLists.txt
-@@ -136,40 +136,45 @@ add_subdirectory(Cedar)
+@@ -136,25 +136,25 @@ add_subdirectory(Cedar)
  add_subdirectory(Mayaqua)
- 
+
  # vpnserver
 -add_subdirectory(vpnserver)
 +#add_subdirectory(vpnserver)
- 
+
  # vpnclient
  add_subdirectory(vpnclient)
- 
+
  # vpnbridge
 -add_subdirectory(vpnbridge)
 +#add_subdirectory(vpnbridge)
- 
+
  # vpncmd
 -add_subdirectory(vpncmd)
 +#add_subdirectory(vpncmd)
- 
+
  # vpntest
 -add_subdirectory(vpntest)
 +#add_subdirectory(vpntest)
- 
+
  # libhamcore
  add_subdirectory(libhamcore)
- 
+
  # hamcorebuilder utility
 -add_subdirectory(hamcorebuilder)
 +#add_subdirectory(hamcorebuilder)
- 
+
  # hamcore.se2 archive file
--add_custom_target(hamcore-archive-build
--  ALL
--  DEPENDS "${BUILD_DIRECTORY}/hamcore.se2"
-+configure_file(
-+    "$ENV{HAMCORE_SE2}/hamcore.se2"
-+    "${BUILD_DIRECTORY}/hamcore.se2"
-+    COPYONLY
+ add_custom_target(hamcore-archive-build
+@@ -162,13 +162,12 @@ add_custom_target(hamcore-archive-build
+   DEPENDS "${BUILD_DIRECTORY}/hamcore.se2"
  )
- 
+
 -add_custom_command(
 -  COMMENT "Building hamcore.se2 archive file..."
 -  COMMAND hamcorebuilder "hamcore.se2" "${TOP_DIRECTORY}/src/bin/hamcore"
@@ -83,85 +59,120 @@ index c49a3c78..a7721b61 100644
 -  OUTPUT "${BUILD_DIRECTORY}/hamcore.se2"
 -  WORKING_DIRECTORY "${BUILD_DIRECTORY}"
 -  VERBATIM
++configure_file("$ENV{HAMCORE_SE2}/hamcore.se2"
++  "${BUILD_DIRECTORY}/hamcore.se2"   COPYONLY
++)
 +add_custom_target(hamcore-archive-build
-+    ALL
-+    DEPENDS "${BUILD_DIRECTORY}/hamcore.se2"
++  ALL
++  DEPENDS "${BUILD_DIRECTORY}/hamcore.se2"
  )
-+#add_custom_command(
-+#  COMMENT "Building hamcore.se2 archive file..."
-+#  COMMAND hamcorebuilder "hamcore.se2" "${TOP_DIRECTORY}/src/bin/hamcore"
-+#  DEPENDS hamcorebuilder "${TOP_DIRECTORY}/src/bin/hamcore/"
-+#  OUTPUT "${BUILD_DIRECTORY}/hamcore.se2"
-+#  WORKING_DIRECTORY "${BUILD_DIRECTORY}"
-+#  VERBATIM
-+#)
- 
+
  if(WIN32)
-   # PenCore
+diff --git a/src/Cedar/CMakeLists.txt b/src/Cedar/CMakeLists.txt
+index 7818d79..6b83b43 100644
+--- a/src/Cedar/CMakeLists.txt
++++ b/src/Cedar/CMakeLists.txt
+@@ -21,10 +21,28 @@ set_target_properties(cedar
+
+ target_link_libraries(cedar PUBLIC mayaqua)
+
+-cmake_host_system_information(RESULT HAS_SSE2 QUERY HAS_SSE2)
+
+-set(BLAKE2_SRC_PATH $<IF:$<BOOL:${HAS_SSE2}>,${TOP_DIRECTORY}/3rdparty/BLAKE2/sse,${TOP_DIRECTORY}/3rdparty/BLAKE2/ref>)
+-set(BLAKE2_SRC $<IF:$<BOOL:${HAS_SSE2}>,${BLAKE2_SRC_PATH}/blake2s.c,${BLAKE2_SRC_PATH}/blake2s-ref.c>)
++if(ANDROID_ABI STREQUAL "arm64-v8a")
++    set(HAS_NEON TRUE)
++elseif(ANDROID_ABI STREQUAL "armeabi-v7a")
++    set(HAS_NEON TRUE)
++    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mfpu=neon")
++    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mfpu=neon")
++elseif(ANDROID_ABI MATCHES "^(x86_64|x86)")
++    include(CheckIncludeFiles)
++    check_include_files("emmintrin.h" HAS_SSE2)
++endif()
++
++if(HAS_SSE2)
++    set(BLAKE2_SRC_PATH ${TOP_DIRECTORY}/3rdparty/BLAKE2/sse)
++    set(BLAKE2_SRC ${BLAKE2_SRC_PATH}/blake2s.c)
++elseif(HAS_NEON)
++    set(BLAKE2_SRC_PATH ${TOP_DIRECTORY}/3rdparty/BLAKE2/neon)
++    set(BLAKE2_SRC ${BLAKE2_SRC_PATH}/blake2s.c)
++else()
++    set(BLAKE2_SRC_PATH ${TOP_DIRECTORY}/3rdparty/BLAKE2/ref)
++    set(BLAKE2_SRC ${BLAKE2_SRC_PATH}/blake2s-ref.c)
++endif()
+
+ target_include_directories(cedar PUBLIC ${BLAKE2_SRC_PATH})
+ target_sources(cedar PRIVATE ${BLAKE2_SRC})
 diff --git a/src/Cedar/Console.c b/src/Cedar/Console.c
-index 45bab426..481fdf8b 100644
+index 45bab42..c57d54a 100644
 --- a/src/Cedar/Console.c
 +++ b/src/Cedar/Console.c
-@@ -31,6 +31,9 @@
+@@ -28,9 +28,14 @@
+ #include <termios.h>
+ #include <sys/ioctl.h>
+
++#ifndef __ANDROID__
  #include <readline/readline.h>
  #include <readline/history.h>
  #endif
++#endif
 +#ifdef __ANDROID__
 +#include <androidhelpers.h>
 +#endif
- 
+
  // Display the help for the command
  void PrintCmdHelp(CONSOLE *c, char *cmd_name, TOKEN_LIST *param_list)
-@@ -2037,7 +2040,11 @@ wchar_t *Prompt(wchar_t *prompt_str)
+@@ -2037,7 +2042,11 @@ wchar_t *Prompt(wchar_t *prompt_str)
  #else	// OS_WIN32
  	{
  		char *prompt = CopyUniToStr(prompt_str);
+-		char *s = readline(prompt);
 +		#ifdef __ANDROID__
 +		char *s = strdup("");
 +		#else
- 		char *s = readline(prompt);
++ 		char *s = readline(prompt);
 +		#endif
  		Free(prompt);
- 
+
  		if (s != NULL)
-@@ -2047,7 +2054,9 @@ wchar_t *Prompt(wchar_t *prompt_str)
- 
+@@ -2047,7 +2056,9 @@ wchar_t *Prompt(wchar_t *prompt_str)
+
  			if (IsEmptyStr(s) == false)
  			{
 +				#ifndef __ANDROID__
  				add_history(s);
 +				#endif
  			}
- 
+
  			ret = CopyStrToUni(s);
 diff --git a/src/Mayaqua/FileIO.c b/src/Mayaqua/FileIO.c
-index 5e4b9c97..a3fdce4c 100644
+index 5e4b9c9..43000c3 100644
 --- a/src/Mayaqua/FileIO.c
 +++ b/src/Mayaqua/FileIO.c
 @@ -19,6 +19,9 @@
  #include "Win32.h"
- 
+
  #include <Hamcore.h>
 +#ifdef __ANDROID__
 +#include <androidhelpers.h>
 +#endif
- 
+
  static char exe_file_name[MAX_SIZE] = "/tmp/a.out";
  static wchar_t exe_file_name_w[MAX_SIZE] = L"/tmp/a.out";
-@@ -876,7 +879,11 @@ void GetExeDir(char *name, UINT size)
+@@ -876,6 +879,11 @@ void GetExeDir(char *name, UINT size)
  	{
  		return;
  	}
--
 +	#ifdef __ANDROID__
 +	char* tmp = GetAndroidTmpDir();
 +	StrCpy(name, size, tmp);
 +	Free(tmp);
 +    #endif
+
  	GetDirNameFromFilePath(name, size, exe_file_name);
  }
- void GetExeDirW(wchar_t *name, UINT size)
-@@ -916,6 +923,10 @@ void GetLogDir(char *name, UINT size)
+@@ -916,6 +924,10 @@ void GetLogDir(char *name, UINT size)
  {
  #ifdef SE_LOGDIR
  	Format(name, size, SE_LOGDIR);
@@ -172,7 +183,7 @@ index 5e4b9c97..a3fdce4c 100644
  #else
  	GetExeDir(name, size);
  #endif
-@@ -934,6 +945,10 @@ void GetDbDir(char *name, UINT size)
+@@ -934,6 +946,10 @@ void GetDbDir(char *name, UINT size)
  {
  #ifdef SE_DBDIR
  	Format(name, size, SE_DBDIR);
@@ -183,92 +194,89 @@ index 5e4b9c97..a3fdce4c 100644
  #else
  	GetExeDir(name, size);
  #endif
-@@ -951,9 +966,13 @@ void GetDbDirW(wchar_t *name, UINT size)
- void GetPidDir(char *name, UINT size)
+@@ -952,6 +968,10 @@ void GetPidDir(char *name, UINT size)
  {
  #ifdef SE_PIDDIR
--	Format(name, size, SE_PIDDIR);
-+    Format(name, size, SE_PIDDIR);
+ 	Format(name, size, SE_PIDDIR);
 +#elif __ANDROID__
 +    char* tmp = GetAndroidTmpDir();
 +    StrCpy(name, size, tmp);
 +	Free(tmp);
  #else
--	GetExeDir(name, size);
-+    GetExeDir(name, size);
+ 	GetExeDir(name, size);
  #endif
- }
- 
 diff --git a/src/Mayaqua/Mayaqua.c b/src/Mayaqua/Mayaqua.c
-index 86492751..42ab4448 100644
+index 8649275..8699b12 100644
 --- a/src/Mayaqua/Mayaqua.c
 +++ b/src/Mayaqua/Mayaqua.c
 @@ -24,6 +24,9 @@
- 
+
  #include <locale.h>
  #include <stdlib.h>
 +#ifdef __ANDROID__
 +#include <androidhelpers.h>
 +#endif
- 
+
  // Global variable
  bool g_memcheck;								// Enable memory check
-@@ -621,12 +624,17 @@ void CheckUnixTempDir()
- 		char tmp[128], tmp2[64];
+@@ -622,11 +625,15 @@ void CheckUnixTempDir()
  		UINT64 now = SystemTime64();
  		IO *o;
+
+-		MakeDir("/tmp");
 +		#ifdef __ANDROID__
 +		char* tmpDir = GetAndroidTmpDir();
 +		#else
 +		char* tmpDir = "/tmp";
 +		#endif
- 
--		MakeDir("/tmp");
-+		MakeDir(tmpDir);
- 
+
  		Format(tmp2, sizeof(tmp2), "%I64u", now);
- 
+
 -		Format(tmp, sizeof(tmp), "/tmp/.%s", tmp2);
 +		Format(tmp, sizeof(tmp), "%s/.%s", tmpDir, tmp2);
- 
+
  		o = FileCreate(tmp);
  		if (o == NULL)
-@@ -634,14 +642,17 @@ void CheckUnixTempDir()
+@@ -634,14 +641,17 @@ void CheckUnixTempDir()
  			o = FileOpen(tmp, false);
  			if (o == NULL)
  			{
 -				Print("Unable to use /tmp.\n\n");
 -				exit(0);
-+				Print("Unable to use temporary dir: (%s).\n\n", tmp);
-+				exit(EXIT_FAILURE);
+++				Print("Unable to use temporary dir: (%s).\n\n", tmp);
+++				exit(EXIT_FAILURE);
  			}
  		}
- 
+
  		FileClose(o);
- 
+
  		FileDelete(tmp);
 +		#ifdef __ANDROID__
 +		Free(tmpDir);
 +		#endif
  	}
  }
- 
+
 diff --git a/src/Mayaqua/Unix.c b/src/Mayaqua/Unix.c
-index 0c3778df..512afb9c 100755
+index 0c3778d..99dd257 100755
 --- a/src/Mayaqua/Unix.c
 +++ b/src/Mayaqua/Unix.c
-@@ -2728,6 +2728,7 @@ void UnixUsage(char *name)
- 	UniPrint(_UU("UNIX_SVC_HELP"), svc_title, svc_name, svc_name, svc_title, svc_name, svc_title);
- }
- 
+@@ -51,6 +51,10 @@
+ #include <sys/statvfs.h>
+ #endif
+
++#ifdef __ANDROID__
++#include <sys/vfs.h>
++#endif
 +
- // Main function of the UNIX service
- UINT UnixService(int argc, char *argv[], char *name, SERVICE_FUNCTION *start, SERVICE_FUNCTION *stop)
- {
-@@ -2737,6 +2738,14 @@ UINT UnixService(int argc, char *argv[], char *name, SERVICE_FUNCTION *start, SE
+ #ifdef	UNIX_MACOS
+ #ifdef	NO_VLAN
+ // Struct statfs for MacOS X
+@@ -2736,7 +2740,14 @@ UINT UnixService(int argc, char *argv[], char *name, SERVICE_FUNCTION *start, SE
+ 	{
  		return 0;
  	}
- 
+-
 +#ifdef __ANDROID__
 +		// On Android, directly call UnixServiceMain without forking
 +		if (argc >= 2 && StrCmpi(argv[1], UNIX_SVC_ARG_EXEC_SVC) == 0) {
@@ -280,16 +288,17 @@ index 0c3778df..512afb9c 100755
  	if (argc >= 2 && StrCmpi(argv[1], UNIX_SVC_ARG_EXEC_SVC) == 0)
  	{
  		UINT pid;
-@@ -2786,6 +2795,7 @@ RESTART_PROCESS:
+@@ -2786,7 +2797,7 @@ RESTART_PROCESS:
  		// Start normally
  		UnixServiceMain(argc, argv, name, start, stop);
  	}
-+#endif // __ANDROID__
- 
+-
++#endif
  	return 0;
  }
+ void UnixServiceMain(int argc, char *argv[], char *name, SERVICE_FUNCTION *start, SERVICE_FUNCTION *stop)
 diff --git a/src/vpnclient/vpncsvc.c b/src/vpnclient/vpncsvc.c
-index 74d6da06..ca760655 100644
+index 74d6da0..ca76065 100644
 --- a/src/vpnclient/vpncsvc.c
 +++ b/src/vpnclient/vpncsvc.c
 @@ -43,4 +43,8 @@ int main(int argc, char *argv[])
