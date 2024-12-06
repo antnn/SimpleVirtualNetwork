@@ -58,7 +58,7 @@ if(EXISTS "${SOFTETHER_THIRD_PARTY_DIR}/SoftEtherVPN")
     )
 endif()
 
-
+#NO-ARCH
 function(build_hamcorebuilder_on_host OUTPUT_DIR)
     set(DIR "${CMAKE_SOURCE_DIR}/softether_third_party/SoftEtherVPN")
 
@@ -130,12 +130,12 @@ set(HAMCORE_SE2 "${CMAKE_SOURCE_DIR}/softether_third_party/build")
 build_hamcorebuilder_on_host(${HAMCORE_SE2})
 
 
+#function(patch_softether DIR)
+#endfunction()
+#patch_softether(${CMAKE_SOURCE_DIR}/softether_third_party/SoftEtherVPN)
 
-function(patch_softether DIR)
-endfunction()
-patch_softether(${CMAKE_SOURCE_DIR}/softether_third_party/SoftEtherVPN)
 
-
+# "armeabi-v7a" "x86" "x86_64"
 
 function(build_deps)
     message(STATUS "Building dependencies for SoftEtherVPN")
@@ -146,13 +146,16 @@ function(build_deps)
 
         set(BUILD_DIR "build/${ANDROID_ABI}")
         file(MAKE_DIRECTORY "${BUILD_DIR}")
-
+        # Suppress NCurses not found: -DCURSES_LIBRARY="${A_PREFIX_PATH}" -DCURSES_INCLUDE_PATH="${A_PREFIX_PATH}"
         execute_process(
                 COMMAND ${CMAKE_COMMAND} -E env HAMCORE_SE2=${HAMCORE_SE2} ${CMAKE_COMMAND}
                 -DCMAKE_BUILD_TYPE=${BUILD}
                 -DCMAKE_TOOLCHAIN_FILE=${NDK}/build/cmake/android.toolchain.cmake
                 -DANDROID_ABI=${ANDROID_ABI}
                 -DANDROID_PLATFORM=android-${MIN_SDK_VERSION}
+                -DCMAKE_INSTALL_PREFIX=${A_PREFIX_PATH}
+                -DCMAKE_PREFIX_PATH=${A_PREFIX_PATH} -DCMAKE_FIND_ROOT_PATH=${A_PREFIX_PATH}
+                -DCURSES_LIBRARY="${A_PREFIX_PATH}" -DCURSES_INCLUDE_PATH="${A_PREFIX_PATH}"
                 ${EXTRA_ARGS}
                 -B ${BUILD_DIR}
                 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
@@ -169,4 +172,4 @@ function(build_deps)
     endforeach ()
 endfunction()
 
-#build_deps()
+build_deps()

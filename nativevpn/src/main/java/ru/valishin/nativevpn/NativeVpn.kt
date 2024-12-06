@@ -9,7 +9,7 @@ import java.io.IOException
 class NativeVpn(private val applicationInfo: ApplicationInfo, private val context: Context) {
     companion object {
         private const val TAG = "NativeVpn"
-        private const val HAMCORE_FILENAME = "hamcore.se2.so"
+        private const val HAMCORE_FILENAME = "hamcore.se2"
         private const val SE_TMP_DIR = "se_tmp"
         private const val SE_DB_DIR = "se_db"
 
