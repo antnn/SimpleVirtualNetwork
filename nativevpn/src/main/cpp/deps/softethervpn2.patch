@@ -14,10 +14,10 @@ index 0a622ab..45d8789 100644
  # We define a dedicated variable because CMAKE_BUILD_TYPE can have different
  # configurations than "Debug" and "Release", such as "RelWithDebInfo".
 diff --git a/src/CMakeLists.txt b/src/CMakeLists.txt
-index c49a3c7..7061482 100644
+index c49a3c7..a7a8ec3 100644
 --- a/src/CMakeLists.txt
 +++ b/src/CMakeLists.txt
-@@ -136,25 +136,25 @@ add_subdirectory(Cedar)
+@@ -136,41 +136,35 @@ add_subdirectory(Cedar)
  add_subdirectory(Mayaqua)
 
  # vpnserver
@@ -47,8 +47,11 @@ index c49a3c7..7061482 100644
 +#add_subdirectory(hamcorebuilder)
 
  # hamcore.se2 archive file
++configure_file("$ENV{HAMCORE_SE2}/hamcore.se2"
++  "${BUILD_DIRECTORY}/hamcore.se2"   COPYONLY
++)
  add_custom_target(hamcore-archive-build
-@@ -162,13 +162,12 @@ add_custom_target(hamcore-archive-build
+   ALL
    DEPENDS "${BUILD_DIRECTORY}/hamcore.se2"
  )
 
@@ -59,15 +62,11 @@ index c49a3c7..7061482 100644
 -  OUTPUT "${BUILD_DIRECTORY}/hamcore.se2"
 -  WORKING_DIRECTORY "${BUILD_DIRECTORY}"
 -  VERBATIM
-+configure_file("$ENV{HAMCORE_SE2}/hamcore.se2"
-+  "${BUILD_DIRECTORY}/hamcore.se2"   COPYONLY
-+)
-+add_custom_target(hamcore-archive-build
-+  ALL
-+  DEPENDS "${BUILD_DIRECTORY}/hamcore.se2"
- )
-
+-)
+-
  if(WIN32)
+   # PenCore
+   add_subdirectory(PenCore)
 diff --git a/src/Cedar/CMakeLists.txt b/src/Cedar/CMakeLists.txt
 index 7818d79..6b83b43 100644
 --- a/src/Cedar/CMakeLists.txt
