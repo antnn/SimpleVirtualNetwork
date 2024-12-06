@@ -242,8 +242,8 @@ index 8649275..8699b12 100644
  			{
 -				Print("Unable to use /tmp.\n\n");
 -				exit(0);
-++				Print("Unable to use temporary dir: (%s).\n\n", tmp);
-++				exit(EXIT_FAILURE);
++				Print("Unable to use temporary dir: (%s).\n\n", tmpDir);
++				exit(EXIT_FAILURE);
  			}
  		}
 
