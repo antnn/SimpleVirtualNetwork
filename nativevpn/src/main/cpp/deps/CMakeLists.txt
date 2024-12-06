@@ -166,6 +166,12 @@ IF(NOT SODIUM_FOUND)
     endif()
 endif ()
 
+find_package(Iconv)
+IF(NOT Iconv_FOUND)
+    build_autoconf_external_project(libiconv "" " ${common_configure_command} " "" " install ")
+    find_package(Iconv REQUIRED)
+ENDIF()
+
 
 find_library(lib_Mayaqua mayaqua)
 find_library(lib_Cedar cedar)

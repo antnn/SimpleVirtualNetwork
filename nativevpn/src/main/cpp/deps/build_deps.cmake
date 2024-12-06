@@ -2,21 +2,18 @@ cmake_minimum_required(VERSION 3.30)
 # This script builds SoftEtherVPN for Android with OpenSSL and libsodium dependencies.
 # It sets up the environment, downloads and patches the required libraries, and compiles them
 # for multiple Android ABIs.
-
-set(BUILD "$ENV{BUILD_TYPE}" CACHE STRING "Build type")
-set(MIN_SDK_VERSION "$ENV{MIN_SDK_VERSION}" CACHE STRING "Minimum Android SDK version")
 set(SOFTETHERVPN_VERSION "$ENV{SOFTETHERVPN_VERSION}" CACHE STRING "SoftEtherVPN version")
-set(OPENSSL_VERSION "$ENV{OPENSSL_VERSION}" CACHE STRING "OpenSSL version")
-set(SODIUM_VERSION "$ENV{SODIUM_VERSION}" CACHE STRING "libsodium version")
-set(SODIUM_VERSION "$ENV{SODIUM_VERSION}" CACHE STRING "libsodium version")
-
-set(NDK "$ENV{ANDROID_NDK_ROOT}" CACHE PATH "Android NDK path")
+set(BUILD                "$ENV{BUILD_TYPE}"           CACHE STRING "Build type")
+set(MIN_SDK_VERSION      "$ENV{MIN_SDK_VERSION}"      CACHE STRING "Minimum Android SDK version")
+set(OPENSSL_VERSION      "$ENV{OPENSSL_VERSION}"      CACHE STRING "OpenSSL version")
+set(SODIUM_VERSION       "$ENV{SODIUM_VERSION}"       CACHE STRING "libsodium version")
+set(SODIUM_VERSION       "$ENV{SODIUM_VERSION}"       CACHE STRING "libsodium version")
+set(ICONV_VERSION        "$ENV{ICONV_VERSION}"        CACHE STRING "libiconv version")
+set(NDK                  "$ENV{ANDROID_NDK_ROOT}"     CACHE PATH   "Android NDK path")
 
 # android_app_name/nativevpn/src/main/jniLibs/
 set(JNI_LIBS_DIR "${CMAKE_SOURCE_DIR}/../../jniLibs")
 set(EXTRA_ARGS "-DMY_JNI_LIBS_DIR=${JNI_LIBS_DIR}")
-
-
 
 function(clone_if_not_exists repo_url branch target_dir)
     if(NOT EXISTS ${target_dir})
@@ -27,6 +24,40 @@ function(clone_if_not_exists repo_url branch target_dir)
         if(NOT clone_result EQUAL "0")
             message(FATAL_ERROR "Failed to clone ${repo_url}")
         endif()
+    endif()
+endfunction()
+
+function(download_and_extract_if_not_exists url filename target_dir)
+    if(NOT EXISTS ${target_dir})
+        set(download_path "${CMAKE_CURRENT_SOURCE_DIR}/${CMAKE_CURRENT_BINARY_DIR}/${filename}")
+
+        # Download the file if it doesn't exist
+        if(NOT EXISTS ${download_path})
+            message(STATUS "Downloading ${url}")
+            file(DOWNLOAD ${url} ${download_path}
+                    SHOW_PROGRESS
+                    STATUS download_status
+                    TLS_VERIFY ON)
+            list(GET download_status 0 status_code)
+            if(NOT status_code EQUAL 0)
+                message(FATAL_ERROR "Failed to download ${url}")
+            endif()
+        endif()
+
+        message(STATUS "Extracting ${filename}")
+        execute_process(
+                COMMAND ${CMAKE_COMMAND} -E tar xzf ${download_path}
+                WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/${CMAKE_CURRENT_BINARY_DIR}"
+                RESULT_VARIABLE extract_result
+        )
+        if(NOT extract_result EQUAL 0)
+            message(FATAL_ERROR "Failed to extract ${filename}")
+        endif()
+
+        file(RENAME
+                "${CMAKE_CURRENT_SOURCE_DIR}/${CMAKE_CURRENT_BINARY_DIR}/libiconv-1.17"
+                ${target_dir}
+        )
     endif()
 endfunction()
 
@@ -64,6 +95,13 @@ if(EXISTS "${SOFTETHER_THIRD_PARTY_DIR}/SoftEtherVPN")
             WORKING_DIRECTORY "${SOFTETHER_THIRD_PARTY_DIR}/SoftEtherVPN"
     )
 endif()
+
+download_and_extract_if_not_exists(
+        "https://ftp.gnu.org/pub/gnu/libiconv/libiconv-${ICONV_VERSION}.tar.gz"
+        "libiconv-${ICONV_VERSION}.tar.gz"
+        "${SOFTETHER_THIRD_PARTY_DIR}/libiconv"
+)
+
 
 #NO-ARCH
 function(build_hamcorebuilder_on_host OUTPUT_DIR)
