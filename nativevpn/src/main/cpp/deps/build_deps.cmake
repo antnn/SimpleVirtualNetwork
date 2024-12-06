@@ -202,6 +202,7 @@ function(build_deps)
                 -DCMAKE_PREFIX_PATH=${A_PREFIX_PATH} -DCMAKE_FIND_ROOT_PATH=${A_PREFIX_PATH}
                 -DCURSES_LIBRARY="${A_PREFIX_PATH}" -DCURSES_INCLUDE_PATH="${A_PREFIX_PATH}"
                 -DLIB_READLINE="${A_PREFIX_PATH}"
+                -DCMAKE_C_FLAGS="-I${CMAKE_CURRENT_SOURCE_DIR}/../include"
                 ${EXTRA_ARGS}
                 -B ${BUILD_DIR}
                 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
