@@ -1,22 +1,5 @@
 cmake_minimum_required(VERSION 3.22.1)
 
-set(CMAKE_ARGS "")
-foreach(VAR_NAME
-        CMAKE_BUILD_TYPE
-        CURSES_LIBRARY
-        CURSES_INCLUDE_PATH
-        CMAKE_TOOLCHAIN_FILE
-        ANDROID_ABI
-        ANDROID_PLATFORM
-        DCMAKE_INSTALL_PREFIX
-        DCMAKE_PREFIX_PATH
-        DCMAKE_FIND_ROOT_PATH
-        BUILD_DIR)
-    if(DEFINED ${VAR_NAME})
-        list(APPEND CMAKE_ARGS "-D${VAR_NAME}=${${VAR_NAME}}")
-    endif()
-endforeach()
-
 if(NOT ANDROID_ABI)
     return()
 endif ()
@@ -40,6 +23,15 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/common.cmake)
 set(DEPS_TARGET "deps_target")
 add_custom_target(${DEPS_TARGET})
 
+
+function(log_error error command args dir )
+    string(REPLACE ";" "\\ " command_print "${command}")
+    string(REPLACE ";" "\\ " args_print "${args}")
+    message (SEND_ERROR "BUILD FAILED AT: ${dir}")
+    message (SEND_ERROR "COMMAND: ${command_print}\n WITH ARGS: ${args_print}")
+    message(FATAL_ERROR "Function Build_external command output:\n\
+    ${error}")
+endfunction()
 
 function(build_external target src_dir)
     message(STATUS "Building external project: ${target} in: ${src_dir} ")
@@ -124,7 +116,7 @@ ${env}")
     set(ext_source_dir "${SOFTETHER_THIRD_PARTY_DIR}/build/${ANDROID_ABI}/${project}")
     message(STATUS "INFO: BUILD_IN_SOURCE 1. Copy ${project} sources to make by ExternalProject to ${ext_source_dir}")
     file(COPY "${lib_SOURCE_DIR}" DESTINATION "${ext_source_dir}/..")
-    #build_args=make | install
+
     build_external(
             "${project}_${ANDROID_ABI}"
             ${ext_source_dir}
@@ -147,39 +139,6 @@ function (add_external_cmake project)
 endfunction()
 
 
-function (prebuild_external_cmake project)
-    message(STATUS "Building external cmake project: ${project}-${ANDROID_ABI}")
-    set(lib_SOURCE_DIR "${SOFTETHER_THIRD_PARTY_DIR}/${project}")
-    set(ext_source_dir "${SOFTETHER_THIRD_PARTY_DIR}/build/${ANDROID_ABI}/${project}")
-    message(STATUS "Copying ${project}-${ANDROID_ABI} sources to ${ext_source_dir}")
-    file(COPY "${lib_SOURCE_DIR}" DESTINATION "${ext_source_dir}/..")
-    execute_process(COMMAND ${CMAKE_COMMAND} ${CMAKE_ARGS} "${ext_source_dir}"
-            WORKING_DIRECTORY "${ext_source_dir}"
-            RESULT_VARIABLE result
-            ERROR_VARIABLE error
-    )
-    if(NOT result EQUAL "0")
-        log_error("${error}" "${CMAKE_COMMAND}" "${AARGS}" "${ext_source_dir}")
-    endif()
-    execute_process(COMMAND ${CMAKE_COMMAND} --build . -j${NPROC}
-            WORKING_DIRECTORY "${ext_source_dir}"
-            RESULT_VARIABLE result
-            ERROR_VARIABLE error
-    )
-    if(NOT result EQUAL "0")
-        log_error("${error}" "${CMAKE_COMMAND}" "--build ." "${ext_source_dir}")
-    endif()
-    execute_process(COMMAND ${CMAKE_COMMAND} --install .
-            WORKING_DIRECTORY "${ext_source_dir}"
-            RESULT_VARIABLE result
-            ERROR_VARIABLE error
-    )
-    if(NOT result EQUAL "0")
-        log_error("${error}" "${CMAKE_COMMAND}" "--install ." "${ext_source_dir}")
-    endif()
-endfunction()
-
-
 get_autoconf_target(AUTOCONF_TARGET)
 set(common_configure_command
         "./configure --host=${AUTOCONF_TARGET}  --prefix=${A_PREFIX_PATH}"
@@ -196,6 +155,7 @@ if (NOT OPENSSL_FOUND)
     build_autoconf_external_project(openssl "" "${openssl_configure_command}" "" " install_dev install_runtime_libs " )
 endif ()
 
+
 pkg_search_module(SODIUM libsodium)
 IF(NOT SODIUM_FOUND)
     if(ANDROID_ABI STREQUAL "arm64-v8a")
@@ -206,23 +166,20 @@ IF(NOT SODIUM_FOUND)
     endif()
 endif ()
 
-find_package(liboqs)
-IF(NOT LIBOQS_INCLUDE_DIR)
-    prebuild_external_cmake(liboqs)
-    find_package(liboqs REQUIRED)
-ENDIF()
 
 find_library(lib_Mayaqua mayaqua)
 find_library(lib_Cedar cedar)
 find_library(lib_Vpnclient androidvpnclient)
 
-if(NOT lib_Mayaqua OR NOT lib_Cedar OR NOT lib_Vpnclient)
+
+if(NOT lib_Mayaqua OR NOT lib_Cedar OR NOT lib_Hamcore OR NOT lib_Vpnclient)
+    set(CMAKE_MODULE_PATH "${SOFTETHER_THIRD_PARTY_DIR}/build/${ANDROID_ABI}/SoftEtherVPN/src/Mayaqua/3rdparty/")
     set(softether_cmake_args ${CMAKE_ARGS} )
     list(APPEND softether_cmake_args "-DCMAKE_PREFIX_PATH=${A_PREFIX_PATH}"
             "-DCMAKE_FIND_ROOT_PATH=${A_PREFIX_PATH}" )
     #list(APPEND softether_cmake_args "-DCMAKE_FIND_ROOT_PATH=${A_PREFIX_PATH}" )
 
-    add_external_cmake(SoftEtherVPN/src)
+    add_external_cmake(SoftEtherVPN)
 
     file(GLOB SO_FILES "${SOFTETHER_THIRD_PARTY_DIR}/build/${ANDROID_ABI}/SoftEtherVPN/*.so")
     file(COPY ${SO_FILES} DESTINATION ${A_PREFIX_PATH}/lib)
@@ -232,4 +189,3 @@ if(NOT lib_Mayaqua OR NOT lib_Cedar OR NOT lib_Vpnclient)
     find_library(lib_Cedar libcedar)
     find_library(lib_vpnclient androidvpnclient)
 endif()
-

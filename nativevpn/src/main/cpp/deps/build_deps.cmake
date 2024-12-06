@@ -8,6 +8,7 @@ set(MIN_SDK_VERSION "$ENV{MIN_SDK_VERSION}" CACHE STRING "Minimum Android SDK ve
 set(SOFTETHERVPN_VERSION "$ENV{SOFTETHERVPN_VERSION}" CACHE STRING "SoftEtherVPN version")
 set(OPENSSL_VERSION "$ENV{OPENSSL_VERSION}" CACHE STRING "OpenSSL version")
 set(SODIUM_VERSION "$ENV{SODIUM_VERSION}" CACHE STRING "libsodium version")
+set(SODIUM_VERSION "$ENV{SODIUM_VERSION}" CACHE STRING "libsodium version")
 
 set(NDK "$ENV{ANDROID_NDK_ROOT}" CACHE PATH "Android NDK path")
 
@@ -37,6 +38,12 @@ clone_if_not_exists(
         "https://github.com/openssl/openssl.git"
         "openssl-${OPENSSL_VERSION}"
         "${SOFTETHER_THIRD_PARTY_DIR}/openssl"
+)
+
+clone_if_not_exists(
+        "https://github.com/jedisct1/libsodium.git"
+        "${SODIUM_VERSION}"
+        "${SOFTETHER_THIRD_PARTY_DIR}/libsodium"
 )
 
 clone_if_not_exists(
@@ -139,7 +146,7 @@ build_hamcorebuilder_on_host(${HAMCORE_SE2})
 
 function(build_deps)
     message(STATUS "Building dependencies for SoftEtherVPN")
-    set(ABIs "arm64-v8a" "armeabi-v7a" "x86" "x86_64")
+    set(ABIs "arm64-v8a" )
     foreach (ANDROID_ABI ${ABIs})
         message("Configuring for ABI: ${ANDROID_ABI}")
         include(${CMAKE_SOURCE_DIR}/common.cmake)
@@ -156,6 +163,7 @@ function(build_deps)
                 -DCMAKE_INSTALL_PREFIX=${A_PREFIX_PATH}
                 -DCMAKE_PREFIX_PATH=${A_PREFIX_PATH} -DCMAKE_FIND_ROOT_PATH=${A_PREFIX_PATH}
                 -DCURSES_LIBRARY="${A_PREFIX_PATH}" -DCURSES_INCLUDE_PATH="${A_PREFIX_PATH}"
+                -DLIB_READLINE="${A_PREFIX_PATH}"
                 ${EXTRA_ARGS}
                 -B ${BUILD_DIR}
                 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
