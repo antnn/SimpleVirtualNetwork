@@ -193,6 +193,7 @@ function(build_deps)
         set(BUILD_DIR "build/${ANDROID_ABI}")
         file(MAKE_DIRECTORY "${BUILD_DIR}")
         # Suppress NCurses not found: -DCURSES_LIBRARY="${A_PREFIX_PATH}" -DCURSES_INCLUDE_PATH="${A_PREFIX_PATH}"
+        # <androidhelpers.h> -DCMAKE_C_FLAGS=-I${CMAKE_CURRENT_SOURCE_DIR}/../include
         execute_process(
                 COMMAND ${CMAKE_COMMAND} -E env HAMCORE_SE2=${HAMCORE_SE2} ${CMAKE_COMMAND}
                 -DCMAKE_BUILD_TYPE=${BUILD}
