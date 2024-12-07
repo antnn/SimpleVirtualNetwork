@@ -21,7 +21,7 @@ $CMAKE_BIN -H"$WORK_DIR" \
 [CMakeLists.txt](https://github.com/antnn/SimpleVirtualNetwork/blob/main/nativevpn/src/main/cpp/deps/CMakeLists.txt#L35)
 
 
-[SoftetherVPN patch](https://github.com/antnn/SimpleVirtualNetwork/blob/main/nativevpn/src/main/cpp/deps/softether.patch#L278)
+[SoftetherVPN patch](https://github.com/antnn/SimpleVirtualNetwork/blob/main/nativevpn/src/main/cpp/deps/softethervpn.patch)
 
 # Build deps
 ```bash
