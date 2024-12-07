@@ -213,13 +213,24 @@ function(build_deps)
                 ${EXTRA_ARGS}
                 -B ${BUILD_DIR}
                 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+                RESULT_VARIABLE result
+                ERROR_VARIABLE error
         )
+        if(NOT result EQUAL "0")
+            log_error("${error}" "${CMAKE_COMMAND}" "" "${CMAKE_CURRENT_SOURCE_DIR}/${BUILD_DIR}")
+        endif()
 
         message("Building for ABI: ${ANDROID_ABI}")
         execute_process(
                 COMMAND ${CMAKE_COMMAND} --build . -j${NPROC}
                 WORKING_DIRECTORY ${BUILD_DIR}
+                RESULT_VARIABLE result
+                ERROR_VARIABLE error
         )
+        if(NOT result EQUAL "0")
+            log_error("${error}" "${CMAKE_COMMAND}" "--build ." "${CMAKE_CURRENT_SOURCE_DIR}/${BUILD_DIR}")
+        endif()
+        
         file(GLOB SO_FILES "${BUILD_DIR}/*.so")
         file(COPY ${SO_FILES} DESTINATION ${A_PREFIX_PATH}/lib)
         file(COPY ${SO_FILES} DESTINATION ${JNI_LIBS_DIR}/${ANDROID_ABI})
