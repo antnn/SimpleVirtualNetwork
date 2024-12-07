@@ -1,4 +1,4 @@
-Multicore build
+Multicore build by default
 ```cmake
 cmake_host_system_information(RESULT nproc
         QUERY NUMBER_OF_PHYSICAL_CORES)
