@@ -27,6 +27,13 @@ $CMAKE_BIN -H"$WORK_DIR" \
 ```bash
 # without container
 cd SimpleVirtualNetwork/nativevpn/src/main/cpp/deps
+```bash
+# without container
+PROJECTS_DIR="projects"
+PNAME="SimpleVirtualNetwork"
+MODULE_NAME="nativevpn"
+WORK_DIR="$HOME/$PROJECTS_DIR/$PNAME/$MODULE_NAME/src/main/cpp/deps"
+
 export NDK_VERSION="27.0.12077973"
 export CMAKE_VERSION="3.30.5"
 export ANDROID_VERSION="35"
@@ -44,13 +51,10 @@ export PATH="${ANDROID_HOME}/cmake/${CMAKE_VERSION}/bin:${ANDROID_HOME}/cmdline-
 CMAKE_DIR="$HOME/Android/cmake"
 LATEST_CMAKE=$(ls -d $CMAKE_DIR/*/ | sort -V | tail -n 1)
 CMAKE_BIN="$LATEST_CMAKE/bin/cmake"
-PROJECTS_DIR="projects"
-PNAME="SimpleVirtualNetwork"
-MODULE_NAME="nativevpn"
-WORK_DIR="$HOME/$PROJECTS_DIR/$PNAME/$MODULE_NAME/src/main/cpp/deps"
 
 $CMAKE_BIN -H"$WORK_DIR" \
            -C "$WORK_DIR/build_deps.cmake" \
-           -B "$WORK_DIR/build"
+           -B "$WORk_DIR/build"
+
 ```
 # Open in Android Studio
