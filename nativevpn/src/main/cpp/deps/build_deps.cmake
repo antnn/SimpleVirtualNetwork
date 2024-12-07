@@ -185,7 +185,7 @@ patch_softether(${CMAKE_SOURCE_DIR}/softether_third_party/SoftEtherVPN)
 
 function(build_deps)
     message(STATUS "Building dependencies for SoftEtherVPN")
-    set(ABIs "arm64-v8a" "armeabi-v7a" "x86" "x86_64")
+    set(ABIs "arm64-v8a" "armeabi-v7a" "x86" "x86_64" )
     foreach (ANDROID_ABI ${ABIs})
         message("Configuring for ABI: ${ANDROID_ABI}")
         include(${CMAKE_SOURCE_DIR}/common.cmake)
@@ -214,7 +214,9 @@ function(build_deps)
                 COMMAND ${CMAKE_COMMAND} --build . -j${NPROC}
                 WORKING_DIRECTORY ${BUILD_DIR}
         )
-
+        file(GLOB SO_FILES "${BUILD_DIR}/*.so")
+        file(COPY ${SO_FILES} DESTINATION ${A_PREFIX_PATH}/lib)
+        file(COPY ${SO_FILES} DESTINATION ${JNI_LIBS_DIR}/${ANDROID_ABI})
         message(STATUS "Libraries are installed at: ${A_PREFIX_PATH}")
 
     endforeach ()

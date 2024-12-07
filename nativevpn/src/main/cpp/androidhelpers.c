@@ -1,12 +1,10 @@
+#include "include/androidhelpers.h"
 #include <stdlib.h>
 #include <string.h>
 #include <android/log.h>
 #include <stdarg.h>
-#include "include/androidhelpers.h"
+#include "global.h"
 
-#define TAG "NativeVpn"
-
-extern struct global_data global_data;
 
 extern int AndroidLog(const char* format, ...) {
     va_list args;

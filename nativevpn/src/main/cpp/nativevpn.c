@@ -1,24 +1,16 @@
+#include "nativevpn.h"
 #include <unistd.h>
 #include <fcntl.h>
 #include <stdlib.h>
 #include <string.h>
 #include <signal.h>
-#include "nativevpn.h"
+#include "global.h"
 
-
-inline int entrypoint(int argc, char *argv[]){
+static inline int entrypoint(int argc, char *argv[]){
     return VpnClientMain(argc, argv);
 }
 
-struct global_data {
-    char *tmp_dir;
-    char *log_dir;
-    char *db_dir;
-    JNIEnv *env;
-    jobject thiz;
-};
-
-static struct global_data global_data = {0};
+struct global_data global_data = {0};
 
 static void cleanup_global_data(JNIEnv *env) {
     if (global_data.thiz) {
@@ -74,7 +66,7 @@ void Java_ru_valishin_nativevpn_NativeVpn_closeFd(JNIEnv *env, jobject thiz, jin
 void Java_ru_valishin_nativevpn_NativeVpn_nativeStartVpnClient(
         JNIEnv *env, jobject thiz, jobjectArray args) {
     if (!args) {
-        AndroidLog("Null arguments array received");
+        ERROR_LOG("Null arguments array received");
         return;
     }
 

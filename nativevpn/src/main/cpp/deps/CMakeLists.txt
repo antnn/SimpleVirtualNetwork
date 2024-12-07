@@ -130,10 +130,7 @@ endfunction()
 function (add_external_cmake project)
     message(STATUS "Adding external cmake project: ${project}-${ANDROID_ABI}")
     set(lib_SOURCE_DIR "${SOFTETHER_THIRD_PARTY_DIR}/${project}")
-    set(ext_source_dir "${SOFTETHER_THIRD_PARTY_DIR}/build/${ANDROID_ABI}/${project}")
-    message(STATUS "Copying ${project}-${ANDROID_ABI} sources to ${ext_source_dir}")
-    file(COPY "${lib_SOURCE_DIR}" DESTINATION "${ext_source_dir}/..")
-    add_subdirectory("${ext_source_dir}")
+    add_subdirectory("${lib_SOURCE_DIR}")
 endfunction()
 
 
@@ -173,23 +170,10 @@ ENDIF()
 
 find_library(lib_Mayaqua mayaqua)
 find_library(lib_Cedar cedar)
-find_library(lib_Vpnclient androidvpnclient)
+find_library(lib_Vpnclient vpnclient)
 
 
 if(NOT lib_Mayaqua OR NOT lib_Cedar OR NOT lib_Hamcore OR NOT lib_Vpnclient)
     set(CMAKE_MODULE_PATH "${SOFTETHER_THIRD_PARTY_DIR}/build/${ANDROID_ABI}/SoftEtherVPN/src/Mayaqua/3rdparty/")
-    set(softether_cmake_args ${CMAKE_ARGS} )
-    list(APPEND softether_cmake_args "-DCMAKE_PREFIX_PATH=${A_PREFIX_PATH}"
-            "-DCMAKE_FIND_ROOT_PATH=${A_PREFIX_PATH}" )
-    #list(APPEND softether_cmake_args "-DCMAKE_FIND_ROOT_PATH=${A_PREFIX_PATH}" )
-
     add_external_cmake(SoftEtherVPN)
-
-    file(GLOB SO_FILES "${SOFTETHER_THIRD_PARTY_DIR}/build/${ANDROID_ABI}/SoftEtherVPN/*.so")
-    file(COPY ${SO_FILES} DESTINATION ${A_PREFIX_PATH}/lib)
-    file(COPY ${SO_FILES} DESTINATION ${MY_JNI_LIBS_DIR}/${ANDROID_ABI})
-
-    find_library(lib_Mayaqua libmayaqua)
-    find_library(lib_Cedar libcedar)
-    find_library(lib_vpnclient androidvpnclient)
 endif()
