@@ -27,8 +27,6 @@ $CMAKE_BIN -H"$WORK_DIR" \
 ```bash
 # without container
 cd SimpleVirtualNetwork/nativevpn/src/main/cpp/deps
-```bash
-# without container
 PROJECTS_DIR="projects"
 PNAME="SimpleVirtualNetwork"
 MODULE_NAME="nativevpn"
