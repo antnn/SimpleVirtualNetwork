@@ -9,7 +9,7 @@ index 0a622ab..45d8789 100644
 -set(TOP_DIRECTORY ${CMAKE_SOURCE_DIR})
 -set(BUILD_DIRECTORY ${CMAKE_BINARY_DIR})
 +set(TOP_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
-+set(BUILD_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${CMAKE_CURRENT_BINARY_DIR})
++set(BUILD_DIRECTORY ${CMAKE_BINARY_DIR})
 
  # We define a dedicated variable because CMAKE_BUILD_TYPE can have different
  # configurations than "Debug" and "Release", such as "RelWithDebInfo".
