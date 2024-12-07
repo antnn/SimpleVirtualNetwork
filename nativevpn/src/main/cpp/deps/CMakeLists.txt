@@ -130,7 +130,10 @@ endfunction()
 function (add_external_cmake project)
     message(STATUS "Adding external cmake project: ${project}-${ANDROID_ABI}")
     set(lib_SOURCE_DIR "${SOFTETHER_THIRD_PARTY_DIR}/${project}")
-    add_subdirectory("${lib_SOURCE_DIR}")
+    set(ext_source_dir "${SOFTETHER_THIRD_PARTY_DIR}/build/${ANDROID_ABI}/${project}")
+    message(STATUS "Copying ${project}-${ANDROID_ABI} sources to ${ext_source_dir}")
+    file(COPY "${lib_SOURCE_DIR}" DESTINATION "${ext_source_dir}/..")
+    add_subdirectory("${ext_source_dir}")
 endfunction()
 
 
@@ -176,4 +179,5 @@ find_library(lib_Vpnclient vpnclient)
 if(NOT lib_Mayaqua OR NOT lib_Cedar OR NOT lib_Hamcore OR NOT lib_Vpnclient)
     set(CMAKE_MODULE_PATH "${SOFTETHER_THIRD_PARTY_DIR}/build/${ANDROID_ABI}/SoftEtherVPN/src/Mayaqua/3rdparty/")
     add_external_cmake(SoftEtherVPN)
+
 endif()
