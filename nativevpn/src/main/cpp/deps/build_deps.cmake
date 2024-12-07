@@ -176,9 +176,14 @@ build_hamcorebuilder_on_host(${HAMCORE_SE2})
 
 function(patch_softether DIR)
 execute_process(
-        COMMAND git apply  ${CMAKE_SOURCE_DIR}/softethervpn2.patch
+        COMMAND git apply  ${CMAKE_SOURCE_DIR}/softethervpn.patch
         WORKING_DIRECTORY ${DIR}
-)
+        RESULT_VARIABLE result
+        ERROR_VARIABLE error
+        )
+if(NOT result EQUAL "0")
+        log_error("${error}" "git" "apply" "${CMAKE_SOURCE_DIR}")
+endif()
 endfunction()
 patch_softether(${CMAKE_SOURCE_DIR}/softether_third_party/SoftEtherVPN)
 
