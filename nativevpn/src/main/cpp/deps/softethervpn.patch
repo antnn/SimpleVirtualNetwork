@@ -177,7 +177,7 @@ index 5e4b9c9..90d726e 100644
 +	#ifdef __ANDROID__
 +	char* tmp = GetAndroidTmpDir();
 +	StrCpy(name, size, tmp);
-+	Free(tmp);
++	free(tmp);
 +    #endif
  
  	GetDirNameFromFilePath(name, size, exe_file_name);
@@ -189,7 +189,7 @@ index 5e4b9c9..90d726e 100644
 +#elif __ANDROID__
 +	 char* tmp = GetAndroidLogDir();
 +	 StrCpy(name, size, tmp);
-+	 Free(tmp);
++	 free(tmp);
  #else
  	GetExeDir(name, size);
  #endif
@@ -200,7 +200,7 @@ index 5e4b9c9..90d726e 100644
 +#elif __ANDROID__
 +	  char* tmp = GetAndroidDbDir();
 +	  StrCpy(name, size, tmp);
-+	  Free(tmp);
++	  free(tmp);
  #else
  	GetExeDir(name, size);
  #endif
@@ -211,7 +211,7 @@ index 5e4b9c9..90d726e 100644
 +#elif __ANDROID__
 +    char* tmp = GetAndroidTmpDir();
 +    StrCpy(name, size, tmp);
-+	Free(tmp);
++	free(tmp);
  #else
  	GetExeDir(name, size);
  #endif
@@ -277,7 +277,7 @@ index 8649275..e152e9f 100644
  
  		FileDelete(tmp);
 +		#ifdef __ANDROID__
-+		Free(tmpDir);
++		free(tmpDir);
 +		#endif
  	}
  }
