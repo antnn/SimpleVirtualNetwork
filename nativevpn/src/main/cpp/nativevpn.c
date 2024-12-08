@@ -109,9 +109,6 @@ void Java_ru_valishin_nativevpn_NativeVpn_nativeStartVpnClient(
     free(argv);
 }
 
-void Java_ru_valishin_nativevpn_NativeVpn_setTmpDir(JNIEnv *env, jobject thiz, jstring dir) {
-    init_globals(&global_data.tmp_dir, env, thiz, dir);
-}
 
 void Java_ru_valishin_nativevpn_NativeVpn_setLogDir(JNIEnv *env, jobject thiz, jstring dir) {
     init_globals(&global_data.log_dir, env, thiz, dir);
@@ -134,4 +131,9 @@ void JNI_OnUnload(JavaVM *vm, void *reserved) {
     if ((*vm)->GetEnv(vm, (void **) &env, JNI_VERSION_1_6) == JNI_OK) {
         cleanup_global_data(env);
     }
+}
+
+JNIEXPORT void JNICALL
+Java_ru_valishin_nativevpn_NativeVpn_setTmpDir(JNIEnv *env, jobject thiz, jstring dir) {
+    init_globals(&global_data.tmp_dir, env, thiz, dir);
 }

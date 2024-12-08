@@ -21,8 +21,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val n = NativeVpn(applicationInfo, applicationContext)
-        val tmp = "$cacheDir/se_tmp"
-        val args =Array<String>(1){"start"}
+        val args =Array<String>(1){"execsvc"}
         n.startVpnClient(args)
         setContent {
             VpnOverHttpsTheme {

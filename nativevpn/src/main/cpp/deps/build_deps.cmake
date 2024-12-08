@@ -159,13 +159,14 @@ function(build_hamcorebuilder_on_host OUTPUT_DIR)
     endif()
 
     # Run hamcorebuilder to produce hamcore.se2 (no-arch)
+    FILE(MAKE_DIRECTORY "${CMAKE_SOURCE_DIR}/../../res/raw")
     execute_process(
-            COMMAND "${OUTPUT_DIR}/hb/hamcorebuilder" "hamcore.se2" "${DIR}/src/bin/hamcore"
-            WORKING_DIRECTORY "${OUTPUT_DIR}"
+            COMMAND "${OUTPUT_DIR}/hb/hamcorebuilder" "hamcore_se2" "${DIR}/src/bin/hamcore"
+            WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/../../res/raw"
             RESULT_VARIABLE result
     )
     if (NOT result EQUAL "0")
-        message(FATAL_ERROR "Failed to compile hamcore.se2 \n CMD: \"${OUTPUT_DIR}/hb/hamcorebuilder\" \"hamcore.se2\" \"${DIR}/src/bin/hamcore\"")
+        message(FATAL_ERROR "Failed to compile hamcore.se2 in Android resources directory")
     endif ()
 endfunction()
 
@@ -182,7 +183,7 @@ execute_process(
         ERROR_VARIABLE error
         )
 if(NOT result EQUAL "0")
-        log_error("${error}" "git" "apply" "${CMAKE_SOURCE_DIR}")
+    MESSAGE(WARNING "Applying SoftherVPN patch failed")
 endif()
 endfunction()
 patch_softether(${CMAKE_SOURCE_DIR}/softether_third_party/SoftEtherVPN)
@@ -233,6 +234,7 @@ function(build_deps)
         
         file(GLOB SO_FILES "${BUILD_DIR}/*.so")
         file(COPY ${SO_FILES} DESTINATION ${A_PREFIX_PATH}/lib)
+        file(GLOB SO_FILES "${A_PREFIX_PATH}/lib/*.so")
         file(COPY ${SO_FILES} DESTINATION ${JNI_LIBS_DIR}/${ANDROID_ABI})
         message(STATUS "Libraries are installed at: ${A_PREFIX_PATH}")
 
