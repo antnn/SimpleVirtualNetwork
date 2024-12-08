@@ -31,19 +31,20 @@ class NativeVpn(private val applicationInfo: ApplicationInfo, private val contex
             setTmpDir(temporaryDir)
             setLogDir(temporaryDir)
             setDbDir(databaseDir)
-            //copyHamcore()
+            copyHamcore()
         } catch (e: IOException) {
             Log.e(TAG, "Failed to initialize VPN directories", e)
             throw VpnInitializationException("Failed to initialize VPN", e)
         }
     }
 
-    /*private fun copyHamcore() {
+    private fun copyHamcore() {
         try {
             File(temporaryDir).mkdirs()
-            context.resources.openRawResource(R.raw.hamcore).use { input ->
-                File(temporaryDir, HAMCORE_FILENAME).apply {
-                    outputStream().use { output ->
+            val hamcoreFile = File(temporaryDir, HAMCORE_FILENAME)
+            if (!hamcoreFile.exists()) {
+                context.resources.openRawResource(R.raw.hamcore_se2).use { input ->
+                    hamcoreFile.outputStream().use { output ->
                         input.copyTo(output)
                     }
                 }
@@ -52,7 +53,7 @@ class NativeVpn(private val applicationInfo: ApplicationInfo, private val contex
             Log.e(TAG, "Failed to copy hamcore file", e)
             throw VpnInitializationException("Failed to copy hamcore file", e)
         }
-    }*/
+    }
 
     external fun closeFd(fd: Int)
 
