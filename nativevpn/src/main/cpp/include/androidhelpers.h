@@ -1,6 +1,7 @@
 #ifndef VPNANDROIDHELPERS_H
 #define VPNANDROIDHELPERS_H
-#include<stdio.h>
+#include <stdio.h>
+#include <stdlib.h>
 extern int   __attribute__((weak)) AndroidLog(const char* format, ...);
 extern void  __attribute__((weak)) AndroidPause();
 extern char* __attribute__((weak)) GetAndroidDbDir();
