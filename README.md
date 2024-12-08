@@ -1,3 +1,10 @@
+Multicore build by default
+```cmake
+cmake_host_system_information(RESULT nproc
+        QUERY NUMBER_OF_PHYSICAL_CORES)
+set(NPROC ${nproc} CACHE INTERNAL "")
+```
+
 
 ```bash
 #build is partially working (openssl, libsodium)
