@@ -50,15 +50,16 @@ $CMAKE_BIN -H"$WORK_DIR" \
            -B "$WORK_DIR/build"
 
 ```
-Multicore build enabled by default
+#### Note: Multicore build enabled by default
 ```cmake
 cmake_host_system_information(RESULT nproc
         QUERY NUMBER_OF_PHYSICAL_CORES)
 set(NPROC ${nproc} CACHE INTERNAL "")
 execute_process(COMMAND ${CMAKE_COMMAND} --build . -j${NPROC} ... )
 ```
-# Open in Android Studio
+# Open this project in Android Studio
 
+# Note: Files to look at
 [build_deps.cmake](https://github.com/antnn/SimpleVirtualNetwork/blob/main/nativevpn/src/main/cpp/deps/build_deps.cmake#L129) <br>
 [CMakeLists.txt](https://github.com/antnn/SimpleVirtualNetwork/blob/main/nativevpn/src/main/cpp/deps/CMakeLists.txt#L35) <br>
 [SoftetherVPN patch](https://github.com/antnn/SimpleVirtualNetwork/blob/main/nativevpn/src/main/cpp/deps/softethervpn.patch) 
