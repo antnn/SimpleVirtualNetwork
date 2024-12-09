@@ -55,18 +55,15 @@ ABIS=("arm64-v8a" "armeabi-v7a" "x86" "x86_64")
 for ANDROID_ABI in "${ABIS[@]}"; do
     echo "Configuring for ABI: ${ANDROID_ABI}"
     mkdir -p "build_${ANDROID_ABI}"
-    cd "build_${ANDROID_ABI}"
-
-    # Run CMAKE configuration
-    ${CMAKE_BIN} \
-        -DCMAKE_TOOLCHAIN_FILE=${ANDROID_NDK_ROOT}/build/cmake/android.toolchain.cmake \
-        -DANDROID_ABI=${ANDROID_ABI} \
-        -DANDROID_PLATFORM=android-${MIN_SDK_VERSION} \
-        ..
-    ${CMAKE_BIN} --build . -j$(nproc)
-    cd ..
+    (cd "build_${ANDROID_ABI}"
+        ${CMAKE_BIN} \
+            -DCMAKE_TOOLCHAIN_FILE=${ANDROID_NDK_ROOT}/build/cmake/android.toolchain.cmake \
+            -DANDROID_ABI=${ANDROID_ABI} \
+            -DANDROID_PLATFORM=android-${MIN_SDK_VERSION} \
+            ..
+        ${CMAKE_BIN} --build . -j$(nproc)
+    )
 done
-
 ```
 
 # Note: Files to look at
