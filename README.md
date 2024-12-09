@@ -1,5 +1,9 @@
 # Install SDK
 ```bash
+apt-get update && apt-get install -y \
+    wget unzip openjdk-17-jdk python3 git perl \
+    build-essential pkg-config;
+
 export NDK_VERSION="27.0.12077973"
 export CMAKE_VERSION="3.30.5"
 export ANDROID_VERSION="35"
