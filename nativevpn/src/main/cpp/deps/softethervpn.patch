@@ -189,7 +189,7 @@ index 5e4b9c9..90d726e 100644
 +#elif __ANDROID__
 +	 char* tmp = GetAndroidLogDir();
 +	 StrCpy(name, size, tmp);
-+	 Free(tmp);
++	 free(tmp);
  #else
  	GetExeDir(name, size);
  #endif
