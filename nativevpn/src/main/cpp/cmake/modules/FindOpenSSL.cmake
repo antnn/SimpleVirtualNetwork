@@ -15,7 +15,7 @@ endfunction()
 
 
 get_openssl_target(OPENSSL_TARGET)
-include(CommonAndroidSetup.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/CommonAndroidSetup.cmake)
 get_autoconf_target(AUTOCONF_TARGET)
 
 set(openssl_configure_flags

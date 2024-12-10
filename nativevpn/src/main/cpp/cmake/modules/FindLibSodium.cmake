@@ -2,7 +2,7 @@ include(ExternalProject)
 set(SODIUM_SHA $ENV{SODIUM_SHA})
 set(SODIUM_VERSION $ENV{SODIUM_VERSION})
 
-include(CommonAndroidSetup.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/CommonAndroidSetup.cmake)
 get_autoconf_target(AUTOCONF_TARGET)
 
 set(configure_flags
