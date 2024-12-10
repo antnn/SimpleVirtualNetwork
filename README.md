@@ -46,6 +46,10 @@ export OPENSSL_SHA=e15dda82fe2fe8139dc2ac21a36d4ca01d5313c75f99f46c4e8a27709b729
 export SODIUM_SHA=8e5aeca07a723a27bbecc3beef14b0068d37e7fc0e97f51b3f1c82d2a58005c1
 export ICONV_SHA=8f74213b56238c85a50a5329f77e06198771e70dd9a739779f4c02f65d971313
 
+export SODIUM_URL="https://github.com/jedisct1/libsodium/archive/refs/tags/${SODIUM_VERSION}.tar.gz"
+export OPENSSL_URL="https://www.openssl.org/source/openssl-${OPENSSL_VERSION}.tar.gz"
+export ICONV_URL="https://ftp.gnu.org/pub/gnu/libiconv/libiconv-${ICONV_VERSION}.tar.gz"
+
 CMAKE_DIR="$HOME/Android/cmake"
 LATEST_CMAKE=$(ls -d $CMAKE_DIR/*/ | sort -V | tail -n 1)
 CMAKE_BIN="$LATEST_CMAKE/bin/cmake"
