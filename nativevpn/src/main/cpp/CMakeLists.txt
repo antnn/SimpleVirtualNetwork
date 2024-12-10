@@ -11,6 +11,9 @@ set(SODIUM_SHA           "$ENV{SODIUM_SHA}"           CACHE STRING "libsodium sh
 set(ICONV_VERSION        "$ENV{ICONV_VERSION}"        CACHE STRING "libiconv version")
 set(ICONV_SHA            "$ENV{ICONV_SHA}"            CACHE STRING "libiconv sha256")
 set(ICONV_URL            "$ENV{ICONV_URL}"            CACHE STRING "libiconv sha256")
+set(SOFTETHERVPN_VERSION "$ENV{SOFTETHERVPN_VERSION}"  CACHE STRING "OpenSSL version")
+set(SOFTETHERVPN_URL     "$ENV{SOFTETHERVPN_URL}"          CACHE STRING "OpenSSL version")
+set(SOFTETHERVPN_SHA     "$ENV{SOFTETHERVPN_SHA}"     CACHE STRING "openssl sha256sum")
 
 function(download_and_extract URL SHA256 SOURCE_DIR)
     if("${URL}" STREQUAL "")
@@ -54,9 +57,27 @@ function(download_and_extract URL SHA256 SOURCE_DIR)
                 file(ARCHIVE_EXTRACT
                         INPUT "${download_path}"
                         DESTINATION "${SOURCE_DIR}"
-                        PATTERN "*/*"
                 )
-            endif()
+    endif()
+
+    # Find the first directory within SOURCE_DIR
+    file(GLOB directories "${SOURCE_DIR}/*")
+    set(FIRST_DIR "")
+
+    foreach(dir_path ${directories})
+        if(IS_DIRECTORY ${dir_path})
+            set(FIRST_DIR ${dir_path})
+            break()
+        endif()
+    endforeach()
+    if(NOT FIRST_DIR STREQUAL "")
+        file(GLOB files_to_move "${FIRST_DIR}/*")
+        foreach(file_path ${files_to_move})
+            get_filename_component(file_name ${file_path} NAME)
+            file(RENAME ${file_path} "${SOURCE_DIR}/${file_name}")
+        endforeach()
+        file(REMOVE_RECURSE "${FIRST_DIR}")
+    endif()
 endfunction()
 
 
@@ -69,8 +90,8 @@ download_and_extract("${SODIUM_URL}" "${SODIUM_SHA}" "${SODIUM_SOURCE_DIR}" )
 set(ICONV_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/deps/iconv)
 download_and_extract("${ICONV_URL}" "${ICONV_SHA}" "${ICONV_SOURCE_DIR}" )
 
-#set(OPENSSL_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/openssl)
-#download_and_extract(${OPENSSL_URL} ${OPENSSL_SHA} ${OPESSL_SOURCE_DIR} )
+set(SOFTETHERVPN_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/deps/softethervpn)
+download_and_extract("${SOFTETHERVPN_URL}" "${SOFTETHERVPN_SHA}" "${SOFTETHERVPN_SOURCE_DIR}" )
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/modules")
 
