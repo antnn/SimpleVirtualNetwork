@@ -63,6 +63,8 @@ add_library(OpenSSL::SSL SHARED IMPORTED GLOBAL)
 add_dependencies(OpenSSL::Crypto openssl)
 add_dependencies(OpenSSL::SSL openssl)
 
+file(MAKE_DIRECTORY ${INSTALL_DIR}/include)
+
 set_target_properties(OpenSSL::Crypto PROPERTIES
     IMPORTED_LOCATION "${INSTALL_DIR}/lib/libcrypto.so"
     INTERFACE_INCLUDE_DIRECTORIES "${INSTALL_DIR}/include"
