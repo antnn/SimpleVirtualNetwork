@@ -4,7 +4,6 @@ set(ICONV_SHA $ENV{ICONV_SHA})
 
 
 include(${CMAKE_CURRENT_LIST_DIR}/CommonAndroidSetup.cmake)
-
 get_autoconf_target(AUTOCONF_TARGET)
 
 set(configure_flags
