@@ -12,6 +12,8 @@ function(get_autoconf_target autoconf_target)
     endif()
 endfunction()
 
+get_autoconf_target(AUTOCONF_TARGET)
+
 set(android_env "ANDROID_NDK_ROOT=${ANDROID_NDK}"
     "CC=${ANDROID_TOOLCHAIN_ROOT}/bin/${AUTOCONF_TARGET}${ANDROID_NATIVE_API_LEVEL}-clang"
     "AR=${ANDROID_TOOLCHAIN_ROOT}/bin/llvm-ar"

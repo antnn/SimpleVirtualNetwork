@@ -9,20 +9,11 @@ get_autoconf_target(AUTOCONF_TARGET)
 set(configure_flags
         --host=${AUTOCONF_TARGET})
 
-    # Add ARM-specific flags if needed
+
 if(ANDROID_ABI STREQUAL "arm64-v8a")
         list(APPEND configure_command ${configure_command} CFLAGS=-march=armv8-a+crypto+aes)
 endif()
 
-set(android_env "ANDROID_NDK_ROOT=${ANDROID_NDK}"
-        "CC=${ANDROID_TOOLCHAIN_ROOT}/bin/${AUTOCONF_TARGET}${ANDROID_NATIVE_API_LEVEL}-clang"
-        "AR=${ANDROID_TOOLCHAIN_ROOT}/bin/llvm-ar"
-        "AS=${ANDROID_TOOLCHAIN_ROOT}/bin/${AUTOCONF_TARGET}${ANDROID_NATIVE_API_LEVEL}-clang"
-        "CXX=${ANDROID_TOOLCHAIN_ROOT}/bin/${AUTOCONF_TARGET}${ANDROID_NATIVE_API_LEVEL}-clang++"
-        "LD=${ANDROID_TOOLCHAIN_ROOT}/bin/ld"
-        "RANLIB=${ANDROID_TOOLCHAIN_ROOT}/bin/llvm-ranlib"
-        "STRIP=${ANDROID_TOOLCHAIN_ROOT}/bin/llvm-strip"
-        "PATH=${ANDROID_TOOLCHAIN_ROOT}/bin:$ENV{PATH}")
 
 set(CONFIGURE_COMMAND
     cd "<SOURCE_DIR>" &&
