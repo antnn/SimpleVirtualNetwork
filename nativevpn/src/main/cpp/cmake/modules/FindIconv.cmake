@@ -20,15 +20,26 @@ set(BUILD_COMMAND
 set(INSTALL_COMMAND
     ${CMAKE_COMMAND} -E env ${android_env} $(MAKE) -sC "<SOURCE_DIR>" install)
 
-ExternalProject_Add(libiconv
-    URL https://ftp.gnu.org/pub/gnu/libiconv/libiconv-${ICONV_VERSION}.tar.gz
-    URL_HASH SHA256=${ICONV_SHA}
-    PREFIX ${CMAKE_CURRENT_BINARY_DIR}/libiconv
-    CONFIGURE_COMMAND ${CONFIGURE_COMMAND}
-    BUILD_COMMAND ${BUILD_COMMAND}
-    INSTALL_COMMAND ${INSTALL_COMMAND}
-    DOWNLOAD_EXTRACT_TIMESTAMP 0
-)
+if(DEFINED ICONV_SOURCE_DIR AND EXISTS ${ICONV_SOURCE_DIR})
+    ExternalProject_Add(libiconv
+        SOURCE_DIR ${ICONV_SOURCE_DIR}
+        PREFIX ${CMAKE_CURRENT_BINARY_DIR}/libiconv
+        CONFIGURE_COMMAND ${CONFIGURE_COMMAND}
+        BUILD_COMMAND ${BUILD_COMMAND}
+        INSTALL_COMMAND ${INSTALL_COMMAND}
+        DOWNLOAD_COMMAND ""
+    )
+else()
+    ExternalProject_Add(libiconv
+        URL https://ftp.gnu.org/pub/gnu/libiconv/libiconv-${ICONV_VERSION}.tar.gz
+        URL_HASH SHA256=${ICONV_SHA}
+        PREFIX ${CMAKE_CURRENT_BINARY_DIR}/libiconv
+        CONFIGURE_COMMAND ${CONFIGURE_COMMAND}
+        BUILD_COMMAND ${BUILD_COMMAND}
+        INSTALL_COMMAND ${INSTALL_COMMAND}
+        DOWNLOAD_EXTRACT_TIMESTAMP 0
+    )
+endif()
 ExternalProject_Get_Property(libiconv INSTALL_DIR)
 list(APPEND CMAKE_PREFIX_PATH ${INSTALL_DIR})
 

@@ -25,15 +25,26 @@ set(CONFIGURE_COMMAND
     ${CMAKE_COMMAND} -E env ${android_env} $(MAKE) -sC "<SOURCE_DIR>" install)
 
 
-ExternalProject_Add(libsodium
-  URL https://github.com/jedisct1/libsodium/archive/refs/tags/${SODIUM_VERSION}.tar.gz
-  URL_HASH SHA256=${SODIUM_SHA}
-  PREFIX ${CMAKE_CURRENT_BINARY_DIR}/libsodium
-  CONFIGURE_COMMAND ${CONFIGURE_COMMAND}
-  BUILD_COMMAND ${BUILD_COMMAND}
-  INSTALL_COMMAND ${INSTALL_COMMAND}
-  DOWNLOAD_EXTRACT_TIMESTAMP 0
+if(DEFINED SODIUM_SOURCE_DIR AND EXISTS ${SODIUM_SOURCE_DIR})
+  ExternalProject_Add(libsodium
+    SOURCE_DIR ${SODIUM_SOURCE_DIR}
+    PREFIX ${CMAKE_CURRENT_BINARY_DIR}/libsodium
+    CONFIGURE_COMMAND ${CONFIGURE_COMMAND}
+        BUILD_COMMAND ${BUILD_COMMAND}
+        INSTALL_COMMAND ${INSTALL_COMMAND}
+        DOWNLOAD_COMMAND ""
+    )
+else()
+    ExternalProject_Add(libsodium
+        URL https://github.com/jedisct1/libsodium/archive/refs/tags/${SODIUM_VERSION}.tar.gz
+        URL_HASH SHA256=${SODIUM_SHA}
+        PREFIX ${CMAKE_CURRENT_BINARY_DIR}/libsodium
+        CONFIGURE_COMMAND ${CONFIGURE_COMMAND}
+        BUILD_COMMAND ${BUILD_COMMAND}
+        INSTALL_COMMAND ${INSTALL_COMMAND}
+        DOWNLOAD_EXTRACT_TIMESTAMP 0
 )
+endif()
 ExternalProject_Get_Property(libsodium INSTALL_DIR)
 list(APPEND CMAKE_PREFIX_PATH ${INSTALL_DIR})
 
