@@ -2,22 +2,75 @@ cmake_minimum_required(VERSION 3.22.1)
 
 project("nativevpn")
 
-include(${CMAKE_SOURCE_DIR}/deps/common.cmake)
-#Keep in sync with deps/CMakeLists.txt and deps/build_deps.cmake
-set(A_PREFIX_PATH "${CMAKE_SOURCE_DIR}/deps/softether_third_party/root/${ANDROID_ABI}" CACHE INTERNAL "" )
-#fix find_package
-list(APPEND CMAKE_PREFIX_PATH "${A_PREFIX_PATH}" )
-set(CMAKE_FIND_ROOT_PATH "${CMAKE_FIND_ROOT_PATH}" "${A_PREFIX_PATH}" )
-#
-# fix common ${CMAKE_SOURCE_DIR}/softether_third_party
-# in set(SOFTETHER_THIRD_PARTY_DIR "${CMAKE_SOURCE_DIR}/softether_third_party" CACHE INTERNAL "")
-
-#[[set(OPENSSL_VERSION      "$ENV{OPENSSL_VERSION}"      CACHE STRING "OpenSSL version")
-set(OPENSSL_SHA_VER      "$ENV{OPENSSL_SHA}"          CACHE STRING "openssl sha256sum")
+set(OPENSSL_VERSION      "$ENV{OPENSSL_VERSION}"      CACHE STRING "OpenSSL version")
+set(OPENSSL_URL          "$ENV{OPENSSL_URL}"          CACHE STRING "OpenSSL version")
+set(OPENSSL_SHA          "$ENV{OPENSSL_SHA}"          CACHE STRING "openssl sha256sum")
 set(SODIUM_VERSION       "$ENV{SODIUM_VERSION}"       CACHE STRING "libsodium version")
+set(SODIUM_URL           "$ENV{SODIUM_URL}"           CACHE STRING "libsodium sha256sum")
 set(SODIUM_SHA           "$ENV{SODIUM_SHA}"           CACHE STRING "libsodium sha256sum")
 set(ICONV_VERSION        "$ENV{ICONV_VERSION}"        CACHE STRING "libiconv version")
-set(ICONV_SHA            "$ENV{ICONV_SHA}"            CACHE STRING "libiconv sha256")]]
+set(ICONV_SHA            "$ENV{ICONV_SHA}"            CACHE STRING "libiconv sha256")
+set(ICONV_URL            "$ENV{ICONV_URL}"            CACHE STRING "libiconv sha256")
+
+function(download_and_extract URL SHA256 SOURCE_DIR)
+    if("${URL}" STREQUAL "")
+        message(FATAL_ERROR "URL parameter is empty")
+    elseif ("${SHA256}" STREQUAL "")
+        message(FATAL_ERROR "SHA256 parameter is empty")
+    elseif ("${SOURCE_DIR}" STREQUAL "")
+        message(FATAL_ERROR "SOURCE_DIR parameter is empty")
+    elseif (EXISTS "${SOURCE_DIR}")
+        return()
+    endif ()
+
+    get_filename_component(filename "${URL}" NAME)
+    set(download_path "${CMAKE_BINARY_DIR}/downloads/${filename}")
+
+    file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/downloads")
+    set(do_download TRUE)
+    if(EXISTS "${download_path}")
+    file(SHA256 "${download_path}" existing_hash)
+                if("${existing_hash}" STREQUAL "${SHA256}")
+                    set(do_download FALSE)
+                endif()
+            endif()
+
+            if(do_download)
+                message(STATUS "Downloading ${URL}")
+                file(DOWNLOAD "${URL}" "${download_path}"
+                        SHOW_PROGRESS
+                        STATUS download_status
+                        EXPECTED_HASH SHA256=${SHA256}
+                        TLS_VERIFY ON
+                )
+                list(GET download_status 0 status_code)
+                if(NOT status_code EQUAL 0)
+                    file(REMOVE "${download_path}")
+                    message(FATAL_ERROR "Failed to download ${URL}")
+                endif()
+            endif()
+            if(NOT EXISTS "${SOURCE_DIR}")
+                message(STATUS "Extracting ${download_path} to ${SOURCE_DIR}")
+                file(ARCHIVE_EXTRACT
+                        INPUT "${download_path}"
+                        DESTINATION "${SOURCE_DIR}"
+                        PATTERN "*/*"
+                )
+            endif()
+endfunction()
+
+
+set(OPENSSL_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/deps/openssl)
+download_and_extract("${OPENSSL_URL}" "${OPENSSL_SHA}" "${OPENSSL_SOURCE_DIR}" )
+
+set(SODIUM_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/deps/libsodium)
+download_and_extract("${SODIUM_URL}" "${SODIUM_SHA}" "${SODIUM_SOURCE_DIR}" )
+
+set(ICONV_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/deps/iconv)
+download_and_extract("${ICONV_URL}" "${ICONV_SHA}" "${ICONV_SOURCE_DIR}" )
+
+#set(OPENSSL_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/openssl)
+#download_and_extract(${OPENSSL_URL} ${OPENSSL_SHA} ${OPESSL_SOURCE_DIR} )
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/modules")
 
