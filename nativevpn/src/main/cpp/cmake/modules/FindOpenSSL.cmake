@@ -28,30 +28,30 @@ set(openssl_configure_flags
 set(OPENSSL_CONFIGURE_COMMAND
     cd "<SOURCE_DIR>" &&
     ${CMAKE_COMMAND} -E env ${android_env} "<SOURCE_DIR>/Configure" ${openssl_configure_flags}
-                             "--prefix=<INSTALL_DIR>")
-  set(OPENSSL_BUILD_COMMAND
+                            "--prefix=<INSTALL_DIR>")
+set(OPENSSL_BUILD_COMMAND
     ${CMAKE_COMMAND} -E env ${android_env} $(MAKE) -sC "<SOURCE_DIR>" build_libs)
-  set(OPENSSL_INSTALL_COMMAND
+set(OPENSSL_INSTALL_COMMAND
     ${CMAKE_COMMAND} -E env ${android_env} $(MAKE) -sC "<SOURCE_DIR>" install_dev install_runtime)
 
 if(DEFINED OPENSSL_SOURCE_DIR AND EXISTS ${OPENSSL_SOURCE_DIR})
-ExternalProject_Add(openssl
-SOURCE_DIR ${OPENSSL_SOURCE_DIR}
-PREFIX ${CMAKE_CURRENT_BINARY_DIR}/openssl
-CONFIGURE_COMMAND ${OPENSSL_CONFIGURE_COMMAND}
-BUILD_COMMAND ${OPENSSL_BUILD_COMMAND}
-INSTALL_COMMAND ${OPENSSL_INSTALL_COMMAND}
-DOWNLOAD_COMMAND ""
+    ExternalProject_Add(openssl
+        SOURCE_DIR ${OPENSSL_SOURCE_DIR}
+        PREFIX ${CMAKE_CURRENT_BINARY_DIR}/openssl
+        CONFIGURE_COMMAND ${OPENSSL_CONFIGURE_COMMAND}
+        BUILD_COMMAND ${OPENSSL_BUILD_COMMAND}
+        INSTALL_COMMAND ${OPENSSL_INSTALL_COMMAND}
+        DOWNLOAD_COMMAND ""
 )
 else()
-ExternalProject_Add(openssl
-  URL https://www.openssl.org/source/openssl-${OPENSSL_VERSION}.tar.gz
-  URL_HASH SHA256=${OPENSSL_SHA_VER}
-  PREFIX ${CMAKE_CURRENT_BINARY_DIR}/openssl
-  CONFIGURE_COMMAND ${OPENSSL_CONFIGURE_COMMAND}
-  BUILD_COMMAND ${OPENSSL_BUILD_COMMAND}
-  INSTALL_COMMAND ${OPENSSL_INSTALL_COMMAND}
-  DOWNLOAD_EXTRACT_TIMESTAMP 0
+    ExternalProject_Add(openssl
+        URL https://www.openssl.org/source/openssl-${OPENSSL_VERSION}.tar.gz
+        URL_HASH SHA256=${OPENSSL_SHA_VER}
+        PREFIX ${CMAKE_CURRENT_BINARY_DIR}/openssl
+        CONFIGURE_COMMAND ${OPENSSL_CONFIGURE_COMMAND}
+        BUILD_COMMAND ${OPENSSL_BUILD_COMMAND}
+        INSTALL_COMMAND ${OPENSSL_INSTALL_COMMAND}
+        DOWNLOAD_EXTRACT_TIMESTAMP 0
 )
 endif()
 ExternalProject_Get_Property(openssl INSTALL_DIR)

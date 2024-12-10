@@ -14,7 +14,7 @@ set(configure_flags
 set(CONFIGURE_COMMAND
     cd "<SOURCE_DIR>" &&
     ${CMAKE_COMMAND} -E env ${android_env} "<SOURCE_DIR>/configure" ${configure_flags}
-                             "--prefix=<INSTALL_DIR>")
+                            "--prefix=<INSTALL_DIR>")
 set(BUILD_COMMAND
     ${CMAKE_COMMAND} -E env ${android_env} $(MAKE) -sC "<SOURCE_DIR>" install)
 set(INSTALL_COMMAND
