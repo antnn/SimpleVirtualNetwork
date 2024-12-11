@@ -51,6 +51,10 @@ build_hamcore_se2(
 )
 
 
+
+add_subdirectory("${SOFTETHERVPN_SOURCE_DIR}"/Cedar)
+add_subdirectory(Mayaqua)
+
 add_library(${CMAKE_PROJECT_NAME} SHARED
         nativevpn.c
         androidhelpers.c)
