@@ -14,7 +14,7 @@ set(ICONV_VERSION        "$ENV{ICONV_VERSION}"        CACHE STRING "libiconv ver
 set(ICONV_SHA            "$ENV{ICONV_SHA}"            CACHE STRING "libiconv sha256")
 set(ICONV_URL            "$ENV{ICONV_URL}"            CACHE STRING "libiconv URL")
 set(SOFTETHERVPN_VERSION "$ENV{SOFTETHERVPN_VERSION}" CACHE STRING "SoftetherVPN version")
-set(SOFTETHERVPN_REPO    "$ENV{SOFTETHERVPN_URL}"     CACHE STRING "SoftetherVPN repo")
+set(SOFTETHERVPN_REPO    "$ENV{SOFTETHERVPN_REPO}"     CACHE STRING "SoftetherVPN repo")
 
 
 
@@ -33,7 +33,7 @@ set(SOFTETHERVPN_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/deps/softethervpn)
 
 find_package(Git REQUIRED)
 clone_if_not_exists(
-        "https://github.com/SoftEtherVPN/SoftEtherVPN.git"
+        "${SOFTETHERVPN_REPO}"
         "${SOFTETHERVPN_VERSION}"
         "${SOFTETHERVPN_SOURCE_DIR}"
 )
