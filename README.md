@@ -50,7 +50,7 @@ export SOFTETHERVPN_SHA="2add80f1a530389d54026f9a4d11005dc4b77e689ac4c4a0143c31c
 export SODIUM_URL="https://github.com/jedisct1/libsodium/archive/refs/tags/${SODIUM_VERSION}.tar.gz"
 export OPENSSL_URL="https://www.openssl.org/source/openssl-${OPENSSL_VERSION}.tar.gz"
 export ICONV_URL="https://ftp.gnu.org/pub/gnu/libiconv/libiconv-${ICONV_VERSION}.tar.gz"
-export SOFTETHERVPN_URL="https://codeload.github.com/SoftEtherVPN/SoftEtherVPN/tar.gz/refs/tags/${SOFTETHERVPN_VERSION}"
+export SOFTETHERVPN_REPO="https://github.com/SoftEtherVPN/SoftEtherVPN.git"
 
 
 CMAKE_DIR="$HOME/Android/cmake"
