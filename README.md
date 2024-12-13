@@ -30,7 +30,10 @@ mkdir -p ${ANDROID_HOME} && \
 # Build deps of sofrethervpn and build libvpnclient.so
 ```bash
 cd SimpleVirtualNetwork
-source nativevpn/deps.txt
+ while IFS='=' read -r key value; do
+    [[ $key =~ ^#.*$ || -z $key ]] && continue;     
+    key=$(echo $key | xargs);     value=$(echo $value | xargs);     
+    export "$key"="$value"; done < ./nativevpn/deps.txt 
 cd nativevpn/src/main/cpp/
 
 CMAKE_DIR="$HOME/Android/cmake"
