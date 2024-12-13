@@ -25,13 +25,14 @@ set(android_env "ANDROID_NDK_ROOT=${ANDROID_NDK}"
     "PATH=${ANDROID_TOOLCHAIN_ROOT}/bin:$ENV{PATH}")
 
 function(log_error error command args dir )
-    string(REPLACE ";" "\\ " command_print "${command}")
-    string(REPLACE ";" "\\ " args_print "${args}")
+    string(REPLACE ";" "\ " command_print "${command}")
+    string(REPLACE ";" "\ " args_print "${args}")
     message (SEND_ERROR "BUILD FAILED AT: ${dir}")
-    message (SEND_ERROR "COMMAND: ${command_print}\n WITH ARGS: ${args_print}")
+    message (SEND_ERROR "COMMAND: ${command_print} \\ ${args_print}")
     message(FATAL_ERROR "Function Build_external command output:\n\
     ${error}")
 endfunction()
+
 
 function(build_external target src_dir)
     message(STATUS "Building external project: ${target} in: ${src_dir} ")
@@ -63,14 +64,34 @@ function(build_external target src_dir)
             ERROR_VARIABLE error
     )
     if(NOT result EQUAL "0")
+        message(WARNING "CMAKE ${CMAKE_CURRENT_BINARY_DIR}/openssl/..")
         log_error("${error}" "${CMAKE_COMMAND}" "--build ." "${trigger_build_dir}")
     endif()
 endfunction()
 
 
 function(build_autoconf_external_project project source_dir env configure_cmd build_args install_args cmake_args )
-    set(AUTOCONF_CURRENT_BUILD_DIR "${CMAKE_CURRENT_SOURCE_DIR}/build/${ANDROID_ABI}/${project}")
-    set(SUPER_BUILD_DIR "${CMAKE_CURRENT_SOURCE_DIR}/build/${ANDROID_ABI}/${project}" PARENT_SCOPE)
+    set(CMAKE_ARGS
+            -DCMAKE_SYSTEM_NAME=${CMAKE_SYSTEM_NAME}
+            -DCMAKE_EXPORT_COMPILE_COMMANDS=${CMAKE_EXPORT_COMPILE_COMMANDS}
+            -DCMAKE_SYSTEM_VERSION=${CMAKE_SYSTEM_VERSION}
+            -DANDROID_PLATFORM=${ANDROID_PLATFORM}
+            -DANDROID_ABI=${ANDROID_ABI}
+            -DCMAKE_ANDROID_ARCH_ABI=${CMAKE_ANDROID_ARCH_ABI}
+            -DANDROID_NDK=${ANDROID_NDK}
+            -DCMAKE_ANDROID_NDK=${CMAKE_ANDROID_NDK}
+            -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}
+            -DCMAKE_MAKE_PROGRAM=${CMAKE_MAKE_PROGRAM}
+            -DCMAKE_LIBRARY_OUTPUT_DIRECTORY=${CMAKE_LIBRARY_OUTPUT_DIRECTORY}
+            -DCMAKE_RUNTIME_OUTPUT_DIRECTORY=${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
+            -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+            -B${CMAKE_CURRENT_BINARY_DIR}/${project}
+            #-DCMAKE_C_FLAGS="${CMAKE_C_FLAGS}"
+            -GNinja
+    )
+
+    set(AUTOCONF_CURRENT_BUILD_DIR "${CMAKE_CURRENT_BINARY_DIR}/${project}")
+    set(SUPER_BUILD_DIR "${CMAKE_CURRENT_BINARY_DIR}/external/${project}" PARENT_SCOPE)
     message(STATUS "INFO: BUILD_IN_SOURCE 1. Copy ${project} sources to make by Superbuild ExternalProject to ${AUTOCONF_CURRENT_BUILD_DIR}")
     file(COPY "${source_dir}" DESTINATION "${AUTOCONF_CURRENT_BUILD_DIR}/..")
     build_external(
@@ -79,8 +100,8 @@ function(build_autoconf_external_project project source_dir env configure_cmd bu
             " SOURCE_DIR ${AUTOCONF_CURRENT_BUILD_DIR} "
             " BUILD_IN_SOURCE 1 "
             " CONFIGURE_COMMAND ${CMAKE_COMMAND} -E env ${android_env} ${configure_cmd}"
-            " BUILD_COMMAND ${CMAKE_COMMAND} -E env ${android_env} $(MAKE) -j${NPROC} ${build_args} "
-            " INSTALL_COMMAND ${CMAKE_COMMAND} -E env ${android_env} $(MAKE) -j${NPROC} ${install_args} "
+            " BUILD_COMMAND ${CMAKE_COMMAND} -E env ${android_env} make -j${NPROC} ${build_args} "
+            " INSTALL_COMMAND ${CMAKE_COMMAND} -E env ${android_env} make -j${NPROC} ${install_args} "
             " CMAKE_ARGS ${CMAKE_ARGS} "
     )
 endfunction()

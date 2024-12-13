@@ -3,25 +3,25 @@ find_library(OPENSSL_SSL_LIBRARY OpenSSL::SSL)
 find_library(OPENSSL_CRYPTO_LIBRARY OpenSSL::Crypto)
 mark_as_advanced(OPENSSL_INCLUDE_DIR OpenSSL_LIBRARY)
 
-if(OPENSSL_FOUND OR TARGET OpenSSL::Crypto)
+if (OPENSSL_FOUND OR TARGET OpenSSL::Crypto)
     return()
 endif ()
 include(ExternalProject)
 
 
-set(OPENSSL_VERSION      $ENV{OPENSSL_VERSION})
-set(OPENSSL_SHA_VER      "$ENV{OPENSSL_SHA}")
+set(OPENSSL_VERSION $ENV{OPENSSL_VERSION})
+set(OPENSSL_SHA_VER "$ENV{OPENSSL_SHA}")
 
 function(get_openssl_target out_var)
-    if(ANDROID_ABI STREQUAL "armeabi-v7a")
+    if (ANDROID_ABI STREQUAL "armeabi-v7a")
         set(${out_var} "android-arm" PARENT_SCOPE)
-    elseif(ANDROID_ABI STREQUAL "arm64-v8a")
+    elseif (ANDROID_ABI STREQUAL "arm64-v8a")
         set(${out_var} "android-arm64" PARENT_SCOPE)
-    elseif(ANDROID_ABI STREQUAL "x86")
+    elseif (ANDROID_ABI STREQUAL "x86")
         set(${out_var} "android-x86" PARENT_SCOPE)
-    elseif(ANDROID_ABI STREQUAL "x86_64")
+    elseif (ANDROID_ABI STREQUAL "x86_64")
         set(${out_var} "android-x86_64" PARENT_SCOPE)
-    endif()
+    endif ()
 endfunction()
 
 get_openssl_target(OPENSSL_TARGET)
@@ -43,28 +43,29 @@ set(OPENSSL_BUILD_COMMAND
 set(OPENSSL_INSTALL_COMMAND
         ${CMAKE_COMMAND} -E env ${android_env} make -j${NPROC} -sC "<SOURCE_DIR>" install_dev install_runtime)
 
-if(DEFINED OPENSSL_SOURCE_DIR AND EXISTS ${OPENSSL_SOURCE_DIR})
+
+#BUILD_IN_SOURCE 1 SO COPY
+if (DEFINED OPENSSL_SOURCE_DIR AND EXISTS ${OPENSSL_SOURCE_DIR})
+    file(COPY "${OPENSSL_SOURCE_DIR}" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/src/openssl/..")
     ExternalProject_Add(openssl
-            EXCLUDE_FROM_ALL 1
-            SOURCE_DIR ${OPENSSL_SOURCE_DIR}
-            PREFIX ${CMAKE_CURRENT_BINARY_DIR}/openssl
+            SOURCE_DIR ${CMAKE_CURRENT_BINARY_DIR}/src/openssl
+            PREFIX ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
             CONFIGURE_COMMAND ${OPENSSL_CONFIGURE_COMMAND}
             BUILD_COMMAND ${OPENSSL_BUILD_COMMAND}
             INSTALL_COMMAND ${OPENSSL_INSTALL_COMMAND}
             DOWNLOAD_COMMAND ""
             BUILD_BYPRODUCTS <INSTALL_DIR>/include/openssl/openssl.h <INSTALL_DIR>/lib/libcrypto.so <INSTALL_DIR>/lib/libssl.so
     )
-else()
+else ()
     ExternalProject_Add(openssl
-            EXCLUDE_FROM_ALL 1
             URL https://www.openssl.org/source/openssl-${OPENSSL_VERSION}.tar.gz
             URL_HASH SHA256=${OPENSSL_SHA_VER}
-            PREFIX ${CMAKE_CURRENT_BINARY_DIR}/openssl
+            PREFIX ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
             CONFIGURE_COMMAND ${OPENSSL_CONFIGURE_COMMAND}
             BUILD_COMMAND ${OPENSSL_BUILD_COMMAND}
             INSTALL_COMMAND ${OPENSSL_INSTALL_COMMAND}
             DOWNLOAD_EXTRACT_TIMESTAMP 0
-            BUILD_BYPRODUCTS  <INSTALL_DIR>/include/openssl/openssl.h <INSTALL_DIR>/lib/libcrypto.so <INSTALL_DIR>/lib/libssl.so
+            BUILD_BYPRODUCTS <INSTALL_DIR>/include/openssl/openssl.h <INSTALL_DIR>/lib/libcrypto.so <INSTALL_DIR>/lib/libssl.so
     )
 endif ()
 ExternalProject_Get_Property(openssl INSTALL_DIR)
@@ -78,9 +79,7 @@ set(openssl_configure_flags
         --prefix=${CMAKE_CURRENT_SOURCE_DIR}/build
         -D__ANDROID_API__=${ANDROID_NATIVE_API_LEVEL}
         -fPIC shared no-ui no-ui-console no-engine no-filenames)
-build_autoconf_external_project(openssl "${OPENSSL_SOURCE_DIR}" "" "${openssl_configure_flags}" "build_generated" "build_generated" "" )
-set(SUPER_BUILD_INCLUDE "${CMAKE_CURRENT_SOURCE_DIR}/build/include")
-file(COPY "${SUPER_BUILD_DIR}/include" DESTINATION "${SUPER_BUILD_INCLUDE}/..")
+build_autoconf_external_project(openssl "${OPENSSL_SOURCE_DIR}" "" "${openssl_configure_flags}" "build_generated" "build_generated" "")
 #message(FATAL_ERROR "COPY ${SUPER_BUILD_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/build/include")
 
 
@@ -93,7 +92,7 @@ set(OPENSSL_INSTALL_PREFIX "${CMAKE_CURRENT_BINARY_DIR}/openssl")
 file(MAKE_DIRECTORY ${INSTALL_DIR}/include)
 #file(MAKE_DIRECTORY ${INSTALL_DIR}/lib)
 
-set (OPENSSL_DIR ${INSTALL_DIR} PARENT_SCOPE)
+set(OPENSSL_DIR ${INSTALL_DIR} PARENT_SCOPE)
 
 add_library(OpenSSL::Crypto UNKNOWN IMPORTED)
 add_dependencies(OpenSSL::Crypto openssl)
@@ -102,21 +101,18 @@ set_target_properties(OpenSSL::Crypto PROPERTIES
         INTERFACE_INCLUDE_DIRECTORIES "${SOURCE_DIR}/include;${INSTALL_DIR}/include"
         IMPORTED_LOCATION "${INSTALL_DIR}/lib/libcrypto.so")
 
-add_library( OpenSSL::SSL UNKNOWN IMPORTED)
-add_dependencies( OpenSSL::SSL openssl)
+add_library(OpenSSL::SSL UNKNOWN IMPORTED)
+add_dependencies(OpenSSL::SSL openssl)
 set_target_properties(OpenSSL::SSL PROPERTIES
         IMPORTED_LINK_INTERFACE_LANGUAGES "C"
         #INTERFACE_INCLUDE_DIRECTORIES "${INSTALL_DIR}/include"
-        INTERFACE_INCLUDE_DIRECTORIES "${SOURCE_DIR}/include"
+        INTERFACE_INCLUDE_DIRECTORIES "${SOURCE_DIR}/include;${INSTALL_DIR}/include"
         IMPORTED_LOCATION "${INSTALL_DIR}/lib/libssl.so")
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(OpenSSL
         REQUIRED_VARS OPENSSL_SSL_LIBRARY OPENSSL_CRYPTO_LIBRARY OPENSSL_INCLUDE_DIR
 )
-
-
-
 
 
 #[[function(get_current_stack_targets output_var)
