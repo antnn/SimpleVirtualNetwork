@@ -20,24 +20,23 @@ set(SOFTETHERVPN_REPO    "$ENV{SOFTETHERVPN_REPO}"    CACHE STRING "SoftetherVPN
 
 
 set(OPENSSL_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/deps/openssl)
-#download_and_extract("${OPENSSL_URL}" "${OPENSSL_SHA}" "${OPENSSL_SOURCE_DIR}" )
+download_and_extract("${OPENSSL_URL}" "${OPENSSL_SHA}" "${OPENSSL_SOURCE_DIR}" )
 
 set(SODIUM_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/deps/libsodium)
-#download_and_extract("${SODIUM_URL}" "${SODIUM_SHA}" "${SODIUM_SOURCE_DIR}" )
+download_and_extract("${SODIUM_URL}" "${SODIUM_SHA}" "${SODIUM_SOURCE_DIR}" )
 
 set(ICONV_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/deps/iconv)
-#download_and_extract("${ICONV_URL}" "${ICONV_SHA}" "${ICONV_SOURCE_DIR}" )
+download_and_extract("${ICONV_URL}" "${ICONV_SHA}" "${ICONV_SOURCE_DIR}" )
 
 set(SOFTETHERVPN_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/deps/softethervpn)
 
 
-
 find_package(Git REQUIRED)
-#[[clone_if_not_exists(
+clone_if_not_exists(
         "${SOFTETHERVPN_REPO}"
         "${SOFTETHERVPN_VERSION}"
         "${SOFTETHERVPN_SOURCE_DIR}"
-)]]
+)
 
 find_package(PkgConfig REQUIRED)
 find_package(OpenSSL REQUIRED)
@@ -73,6 +72,10 @@ cmake_host_system_information(RESULT nproc
         QUERY NUMBER_OF_PHYSICAL_CORES)
 set(NPROC ${nproc} CACHE INTERNAL "")
 
+
+add_library(androidhelpers INTERFACE)
+target_include_directories(androidhelpers INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/include")
+target_compile_definitions(androidhelpers INTERFACE androidhelpers=1)
 
 add_subdirectory("${SOFTETHERVPN_SOURCE_DIR}")
 

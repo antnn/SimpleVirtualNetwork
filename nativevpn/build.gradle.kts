@@ -5,6 +5,22 @@ plugins {
     id("org.jetbrains.kotlin.android")
 }
 
+
+fun loadProperties(filename: String): Map<String, String> {
+    val properties = mutableMapOf<String, String>()
+    file(filename).readLines().forEach { line ->
+        if (line.isNotBlank() && !line.startsWith("#")) {
+            val parts = line.split("=", limit = 2)
+            if (parts.size == 2) {
+                properties[parts[0].trim()] = parts[1].trim()
+            }
+        }
+    }
+    return properties
+}
+
+val versions = loadProperties("deps.txt")
+
 android {
     sourceSets {
 
@@ -20,8 +36,13 @@ android {
         externalNativeBuild {
             cmake {
                 cppFlags("")
+                arguments(
+                    *versions.map { (key, value) ->
+                        "-D$key=$value"
+                    }.toTypedArray()
+                )
                 //arguments("-G", "Unix Makefiles", "-DCMAKE_MAKE_PROGRAM=/var/home/a/Android/cmake/3.22.1/bin/make")
-                arguments("-DCMAKE_C_FLAGS=-I${project.projectDir.absolutePath}/src/main/cpp/include" )
+                //arguments("-DCMAKE_C_FLAGS=-I${project.projectDir.absolutePath}/src/main/cpp/include" )
             }
         }
     }
