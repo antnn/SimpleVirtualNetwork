@@ -98,15 +98,14 @@ add_library(OpenSSL::Crypto UNKNOWN IMPORTED)
 add_dependencies(OpenSSL::Crypto openssl)
 set_target_properties(OpenSSL::Crypto PROPERTIES
         IMPORTED_LINK_INTERFACE_LANGUAGES "C"
-        INTERFACE_INCLUDE_DIRECTORIES "${SOURCE_DIR}/include;${INSTALL_DIR}/include"
+        INTERFACE_INCLUDE_DIRECTORIES "${SUPER_BUILD_DIR}/include;${INSTALL_DIR}/include"
         IMPORTED_LOCATION "${INSTALL_DIR}/lib/libcrypto.so")
 
 add_library(OpenSSL::SSL UNKNOWN IMPORTED)
 add_dependencies(OpenSSL::SSL openssl)
 set_target_properties(OpenSSL::SSL PROPERTIES
         IMPORTED_LINK_INTERFACE_LANGUAGES "C"
-        #INTERFACE_INCLUDE_DIRECTORIES "${INSTALL_DIR}/include"
-        INTERFACE_INCLUDE_DIRECTORIES "${SOURCE_DIR}/include;${INSTALL_DIR}/include"
+        INTERFACE_INCLUDE_DIRECTORIES "${SUPER_BUILD_DIR}/include;${INSTALL_DIR}/include"
         IMPORTED_LOCATION "${INSTALL_DIR}/lib/libssl.so")
 
 include(FindPackageHandleStandardArgs)
