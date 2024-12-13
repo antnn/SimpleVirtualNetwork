@@ -28,6 +28,7 @@ set(INSTALL_COMMAND
 
 
 if (DEFINED SODIUM_SOURCE_DIR AND EXISTS ${SODIUM_SOURCE_DIR})
+    message(STATUS "NECESSARY Copy of sources. Reason: BUILD_IN_SOURCE 1 ExternalProject(libsodium")
     file(COPY "${SODIUM_SOURCE_DIR}" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/src/libsodium/..")
     ExternalProject_Add(libsodium
             SOURCE_DIR "${CMAKE_CURRENT_BINARY_DIR}/src/libsodium/"

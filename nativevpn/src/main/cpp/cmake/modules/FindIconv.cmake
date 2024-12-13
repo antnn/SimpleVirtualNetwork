@@ -25,8 +25,8 @@ set(INSTALL_COMMAND
 
 #BUILD_IN_SOURCE 1 SO COPY
 if (DEFINED ICONV_SOURCE_DIR AND EXISTS ${ICONV_SOURCE_DIR})
+    message(STATUS "NECESSARY Copy of sources. Reason: BUILD_IN_SOURCE 1 ExternalProject(libiconv")
     file(COPY "${ICONV_SOURCE_DIR}" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/src/iconv/..")
-    message(WARNING "${CMAKE_CURRENT_BINARY_DIR}/src/iconv")
     ExternalProject_Add(libiconv
             SOURCE_DIR ${CMAKE_CURRENT_BINARY_DIR}/src/iconv
             PREFIX ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
@@ -54,7 +54,7 @@ ExternalProject_Get_Property(libiconv SOURCE_DIR)
 file(MAKE_DIRECTORY ${INSTALL_DIR}/include)
 #file(MAKE_DIRECTORY ${INSTALL_DIR}/lib)
 # Set the variables
-set(ICONV_INCLUDE_DIR ${SOURCE_DIR}/include)
+set(ICONV_INCLUDE_DIR "${SOURCE_DIR}/include;${INSTALL_DIR}/include")
 set(ICONV_LIBRARY ${INSTALL_DIR}/lib/libiconv.so)
 set(LIB_ICONV ${INSTALL_DIR}/lib/libiconv.so)
 
@@ -63,8 +63,9 @@ add_library(iconv UNKNOWN IMPORTED)
 add_dependencies(iconv libiconv)
 set_target_properties(iconv PROPERTIES
         IMPORTED_LINK_INTERFACE_LANGUAGES "C"
-        INTERFACE_INCLUDE_DIRECTORIES "${ICONV_INCLUDE_DIR};${INSTALL_DIR}/include"
+        INTERFACE_INCLUDE_DIRECTORIES "${ICONV_INCLUDE_DIR}"
         IMPORTED_LOCATION "${INSTALL_DIR}/lib/libiconv.so")
+
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(Iconv
@@ -74,5 +75,4 @@ find_package_handle_standard_args(Iconv
 set(Iconv_INCLUDE_DIRS ${ICONV_INCLUDE_DIR})
 set(Iconv_LIBRARIES ${ICONV_LIBRARY})
 set(Iconv_FOUND ${ICONV_FOUND})
-
 

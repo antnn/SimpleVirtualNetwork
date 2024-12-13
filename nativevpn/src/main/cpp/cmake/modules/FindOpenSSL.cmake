@@ -46,6 +46,7 @@ set(OPENSSL_INSTALL_COMMAND
 
 #BUILD_IN_SOURCE 1 SO COPY
 if (DEFINED OPENSSL_SOURCE_DIR AND EXISTS ${OPENSSL_SOURCE_DIR})
+    message(STATUS "NECESSARY Copy of sources. Reason: BUILD_IN_SOURCE 1 ExternalProject(openssl")
     file(COPY "${OPENSSL_SOURCE_DIR}" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/src/openssl/..")
     ExternalProject_Add(openssl
             SOURCE_DIR ${CMAKE_CURRENT_BINARY_DIR}/src/openssl
@@ -80,7 +81,6 @@ set(openssl_configure_flags
         -D__ANDROID_API__=${ANDROID_NATIVE_API_LEVEL}
         -fPIC shared no-ui no-ui-console no-engine no-filenames)
 build_autoconf_external_project(openssl "${OPENSSL_SOURCE_DIR}" "" "${openssl_configure_flags}" "build_generated" "build_generated" "")
-#message(FATAL_ERROR "COPY ${SUPER_BUILD_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/build/include")
 
 
 set(OPENSSL_CRYPTO_LIBRARY "${INSTALL_DIR}/lib/libcrypto.so")

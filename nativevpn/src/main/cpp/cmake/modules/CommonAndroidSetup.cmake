@@ -92,7 +92,7 @@ function(build_autoconf_external_project project source_dir env configure_cmd bu
 
     set(AUTOCONF_CURRENT_BUILD_DIR "${CMAKE_CURRENT_BINARY_DIR}/${project}")
     set(SUPER_BUILD_DIR "${CMAKE_CURRENT_BINARY_DIR}/external/${project}" PARENT_SCOPE)
-    message(STATUS "INFO: BUILD_IN_SOURCE 1. Copy ${project} sources to make by Superbuild ExternalProject to ${AUTOCONF_CURRENT_BUILD_DIR}")
+    message(STATUS "NECESSARY Copy reason: BUILD_IN_SOURCE 1. From ${project} sources to make by Superbuild ExternalProject to ${AUTOCONF_CURRENT_BUILD_DIR}")
     file(COPY "${source_dir}" DESTINATION "${AUTOCONF_CURRENT_BUILD_DIR}/..")
     build_external(
             "${project}_${ANDROID_ABI}"

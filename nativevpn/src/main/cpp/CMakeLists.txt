@@ -74,7 +74,7 @@ cmake_host_system_information(RESULT nproc
 set(NPROC ${nproc} CACHE INTERNAL "")
 
 
-#add_subdirectory("${SOFTETHERVPN_SOURCE_DIR}")
+add_subdirectory("${SOFTETHERVPN_SOURCE_DIR}")
 
 add_library(${CMAKE_PROJECT_NAME} SHARED
         nativevpn.c
@@ -85,7 +85,6 @@ target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE
         OpenSSL::SSL
         OpenSSL::Crypto
         $<IF:$<BOOL:SODIUM_LINK_LIBRARIES>,${SODIUM_LINK_LIBRARIES},${SODIUM_LIBRARIES}>
- #       sodium
         iconv
 )
 
