@@ -71,6 +71,8 @@ endfunction()
 
 
 function(build_autoconf_external_project project source_dir env configure_cmd build_args install_args cmake_args )
+    set(AUTOCONF_CURRENT_BUILD_DIR "${CMAKE_CURRENT_BINARY_DIR}/external/${project}")
+    set(SUPER_BUILD_DIR ${AUTOCONF_CURRENT_BUILD_DIR} PARENT_SCOPE)
     set(CMAKE_ARGS
             -DCMAKE_SYSTEM_NAME=${CMAKE_SYSTEM_NAME}
             -DCMAKE_EXPORT_COMPILE_COMMANDS=${CMAKE_EXPORT_COMPILE_COMMANDS}
@@ -85,13 +87,10 @@ function(build_autoconf_external_project project source_dir env configure_cmd bu
             -DCMAKE_LIBRARY_OUTPUT_DIRECTORY=${CMAKE_LIBRARY_OUTPUT_DIRECTORY}
             -DCMAKE_RUNTIME_OUTPUT_DIRECTORY=${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
             -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
-            -B${CMAKE_CURRENT_BINARY_DIR}/${project}
+            -B${AUTOCONF_CURRENT_BUILD_DIR}
             #-DCMAKE_C_FLAGS="${CMAKE_C_FLAGS}"
             -G${CMAKE_GENERATOR}
     )
-
-    set(AUTOCONF_CURRENT_BUILD_DIR "${CMAKE_CURRENT_BINARY_DIR}/${project}")
-    set(SUPER_BUILD_DIR "${CMAKE_CURRENT_BINARY_DIR}/external/${project}" PARENT_SCOPE)
     message(STATUS "NECESSARY Copy reason: BUILD_IN_SOURCE 1. From ${project} sources to make by Superbuild ExternalProject to ${AUTOCONF_CURRENT_BUILD_DIR}")
     file(COPY "${source_dir}" DESTINATION "${AUTOCONF_CURRENT_BUILD_DIR}/..")
     build_external(

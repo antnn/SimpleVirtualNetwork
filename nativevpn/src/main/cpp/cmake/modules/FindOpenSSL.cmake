@@ -73,6 +73,9 @@ ExternalProject_Get_Property(openssl INSTALL_DIR)
 ExternalProject_Get_Property(openssl SOURCE_DIR)
 
 
+set(OPENSSL_CRYPTO_LIBRARY "${INSTALL_DIR}/lib/libcrypto.so")
+set(OPENSSL_SSL_LIBRARY "${INSTALL_DIR}/lib/libssl.so")
+
 message(WARNING "Generating headers due to CMake and Ninja build system limitations in External build prioritization")
 set(openssl_configure_flags
         ./Configure
@@ -81,13 +84,9 @@ set(openssl_configure_flags
         -D__ANDROID_API__=${ANDROID_NATIVE_API_LEVEL}
         -fPIC shared no-ui no-ui-console no-engine no-filenames)
 build_autoconf_external_project(openssl "${OPENSSL_SOURCE_DIR}" "" "${openssl_configure_flags}" "build_generated" "build_generated" "")
-
-
-set(OPENSSL_CRYPTO_LIBRARY "${INSTALL_DIR}/lib/libcrypto.so")
-set(OPENSSL_SSL_LIBRARY "${INSTALL_DIR}/lib/libssl.so")
 # Ninja does not respect byproducts with headers. It behaves like they already there
-set(OPENSSL_INCLUDE_DIR "${SUPER_BUILD_INCLUDE};${INSTALL_DIR}/include")
-set(OPENSSL_INSTALL_PREFIX "${CMAKE_CURRENT_BINARY_DIR}/openssl")
+set(OPENSSL_INCLUDE_DIR "${SUPER_BUILD_DIR}/include;${INSTALL_DIR}/include")
+set(OPENSSL_INSTALL_PREFIX "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
 
 file(MAKE_DIRECTORY ${INSTALL_DIR}/include)
 #file(MAKE_DIRECTORY ${INSTALL_DIR}/lib)
