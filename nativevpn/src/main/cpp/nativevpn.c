@@ -7,7 +7,7 @@
 #include "global.h"
 
 static inline int entrypoint(int argc, char *argv[]){
-    //return VpnClientMain(argc, argv);
+    return VpnClientMain(argc, argv);
 }
 
 struct global_data global_data = {0};

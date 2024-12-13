@@ -47,7 +47,7 @@ set(OPENSSL_INSTALL_COMMAND
 #BUILD_IN_SOURCE 1 SO COPY
 if (DEFINED OPENSSL_SOURCE_DIR AND EXISTS ${OPENSSL_SOURCE_DIR})
     message(STATUS "NECESSARY Copy of sources. Reason: BUILD_IN_SOURCE 1 ExternalProject(openssl")
-    set(COPY_SRC_DIR "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/src/openssl/")
+    set(COPY_SRC_DIR "${CMAKE_CURRENT_BINARY_DIR}/src/openssl/")
     file(COPY "${OPENSSL_SOURCE_DIR}" DESTINATION "${COPY_SRC_DIR}/..")
     ExternalProject_Add(openssl
             SOURCE_DIR ${COPY_SRC_DIR}
@@ -92,20 +92,21 @@ set(OPENSSL_INSTALL_PREFIX "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
 file(MAKE_DIRECTORY ${INSTALL_DIR}/include)
 #file(MAKE_DIRECTORY ${INSTALL_DIR}/lib)
 
-set(OPENSSL_DIR ${INSTALL_DIR})
+set(OPENSSL_DIR ${INSTALL_DIR} PARENT_SCOPE)
 
 add_library(OpenSSL::Crypto UNKNOWN IMPORTED)
 add_dependencies(OpenSSL::Crypto openssl)
 set_target_properties(OpenSSL::Crypto PROPERTIES
         IMPORTED_LINK_INTERFACE_LANGUAGES "C"
-        INTERFACE_INCLUDE_DIRECTORIES "${SUPER_BUILD_DIR}/include;${INSTALL_DIR}/include"
+        INTERFACE_INCLUDE_DIRECTORIES "${SOURCE_DIR}/include;${INSTALL_DIR}/include"
         IMPORTED_LOCATION "${INSTALL_DIR}/lib/libcrypto.so")
 
 add_library(OpenSSL::SSL UNKNOWN IMPORTED)
 add_dependencies(OpenSSL::SSL openssl)
 set_target_properties(OpenSSL::SSL PROPERTIES
         IMPORTED_LINK_INTERFACE_LANGUAGES "C"
-        INTERFACE_INCLUDE_DIRECTORIES "${SUPER_BUILD_DIR}/include;${INSTALL_DIR}/include"
+        #INTERFACE_INCLUDE_DIRECTORIES "${INSTALL_DIR}/include"
+        INTERFACE_INCLUDE_DIRECTORIES "${SOURCE_DIR}/include;${INSTALL_DIR}/include"
         IMPORTED_LOCATION "${INSTALL_DIR}/lib/libssl.so")
 
 include(FindPackageHandleStandardArgs)

@@ -89,6 +89,9 @@ target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE
         OpenSSL::Crypto
         $<IF:$<BOOL:SODIUM_LINK_LIBRARIES>,${SODIUM_LINK_LIBRARIES},${SODIUM_LIBRARIES}>
         iconv
+        mayaqua
+        cedar
+        vpnclient
 )
 
 
