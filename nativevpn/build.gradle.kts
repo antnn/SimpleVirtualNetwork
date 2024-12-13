@@ -20,7 +20,8 @@ android {
         externalNativeBuild {
             cmake {
                 cppFlags("")
-                arguments("-DMY_ANDROID_MODULE_DIR=${project.projectDir.absolutePath}" )
+                //arguments("-G", "Unix Makefiles", "-DCMAKE_MAKE_PROGRAM=/var/home/a/Android/cmake/3.22.1/bin/make")
+                arguments("-DCMAKE_C_FLAGS=-I${project.projectDir.absolutePath}/src/main/cpp/include" )
             }
         }
     }

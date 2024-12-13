@@ -12,3 +12,8 @@ local.properties
 /nativevpn/src/main/cpp/deps/build/**
 /nativevpn/src/main/jniLibs
 /nativevpn/src/main/cpp/deps/build/
+/nativevpn/src/main/cpp/deps/iconv/
+/nativevpn/src/main/cpp/deps/libsodium/
+/nativevpn/src/main/cpp/deps/openssl/
+/nativevpn/src/main/cpp/deps/softethervpn/
+

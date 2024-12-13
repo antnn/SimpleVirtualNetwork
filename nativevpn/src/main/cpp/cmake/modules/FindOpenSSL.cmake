@@ -1,6 +1,17 @@
+find_path(OPENSSL_INCLUDE_DIR openssl.h)
+find_library(OPENSSL_SSL_LIBRARY OpenSSL::SSL)
+find_library(OPENSSL_CRYPTO_LIBRARY OpenSSL::Crypto)
+mark_as_advanced(OPENSSL_INCLUDE_DIR OpenSSL_LIBRARY)
+
+if(OPENSSL_FOUND OR TARGET OpenSSL::Crypto)
+    return()
+endif ()
 include(ExternalProject)
+
+
 set(OPENSSL_VERSION      $ENV{OPENSSL_VERSION})
 set(OPENSSL_SHA_VER      "$ENV{OPENSSL_SHA}")
+
 function(get_openssl_target out_var)
     if(ANDROID_ABI STREQUAL "armeabi-v7a")
         set(${out_var} "android-arm" PARENT_SCOPE)
@@ -13,67 +24,129 @@ function(get_openssl_target out_var)
     endif()
 endfunction()
 
-
 get_openssl_target(OPENSSL_TARGET)
+
 include(${CMAKE_CURRENT_LIST_DIR}/CommonAndroidSetup.cmake)
 get_autoconf_target(AUTOCONF_TARGET)
-
 
 set(openssl_configure_flags
         ${OPENSSL_TARGET}
         -D__ANDROID_API__=${ANDROID_NATIVE_API_LEVEL}
         -fPIC shared no-ui no-ui-console no-engine no-filenames)
 
-
 set(OPENSSL_CONFIGURE_COMMAND
-    cd "<SOURCE_DIR>" &&
-    ${CMAKE_COMMAND} -E env ${android_env} "<SOURCE_DIR>/Configure" ${openssl_configure_flags}
-                            "--prefix=<INSTALL_DIR>")
+        cd "<SOURCE_DIR>" &&
+        ${CMAKE_COMMAND} -E env ${android_env} "<SOURCE_DIR>/Configure" ${openssl_configure_flags}
+        "--prefix=<INSTALL_DIR>")
 set(OPENSSL_BUILD_COMMAND
-    ${CMAKE_COMMAND} -E env ${android_env} $(MAKE) -sC "<SOURCE_DIR>" build_libs)
+        ${CMAKE_COMMAND} -E env ${android_env} make -j${NPROC} -sC "<SOURCE_DIR>" build_libs)
 set(OPENSSL_INSTALL_COMMAND
-    ${CMAKE_COMMAND} -E env ${android_env} $(MAKE) -sC "<SOURCE_DIR>" install_dev install_runtime)
+        ${CMAKE_COMMAND} -E env ${android_env} make -j${NPROC} -sC "<SOURCE_DIR>" install_dev install_runtime)
 
 if(DEFINED OPENSSL_SOURCE_DIR AND EXISTS ${OPENSSL_SOURCE_DIR})
     ExternalProject_Add(openssl
-        SOURCE_DIR ${OPENSSL_SOURCE_DIR}
-        PREFIX ${CMAKE_CURRENT_BINARY_DIR}/openssl
-        CONFIGURE_COMMAND ${OPENSSL_CONFIGURE_COMMAND}
-        BUILD_COMMAND ${OPENSSL_BUILD_COMMAND}
-        INSTALL_COMMAND ${OPENSSL_INSTALL_COMMAND}
-        DOWNLOAD_COMMAND ""
-)
+            EXCLUDE_FROM_ALL 1
+            SOURCE_DIR ${OPENSSL_SOURCE_DIR}
+            PREFIX ${CMAKE_CURRENT_BINARY_DIR}/openssl
+            CONFIGURE_COMMAND ${OPENSSL_CONFIGURE_COMMAND}
+            BUILD_COMMAND ${OPENSSL_BUILD_COMMAND}
+            INSTALL_COMMAND ${OPENSSL_INSTALL_COMMAND}
+            DOWNLOAD_COMMAND ""
+            BUILD_BYPRODUCTS <INSTALL_DIR>/include/openssl/openssl.h <INSTALL_DIR>/lib/libcrypto.so <INSTALL_DIR>/lib/libssl.so
+    )
 else()
     ExternalProject_Add(openssl
-        URL https://www.openssl.org/source/openssl-${OPENSSL_VERSION}.tar.gz
-        URL_HASH SHA256=${OPENSSL_SHA_VER}
-        PREFIX ${CMAKE_CURRENT_BINARY_DIR}/openssl
-        CONFIGURE_COMMAND ${OPENSSL_CONFIGURE_COMMAND}
-        BUILD_COMMAND ${OPENSSL_BUILD_COMMAND}
-        INSTALL_COMMAND ${OPENSSL_INSTALL_COMMAND}
-        DOWNLOAD_EXTRACT_TIMESTAMP 0
-)
-endif()
+            EXCLUDE_FROM_ALL 1
+            URL https://www.openssl.org/source/openssl-${OPENSSL_VERSION}.tar.gz
+            URL_HASH SHA256=${OPENSSL_SHA_VER}
+            PREFIX ${CMAKE_CURRENT_BINARY_DIR}/openssl
+            CONFIGURE_COMMAND ${OPENSSL_CONFIGURE_COMMAND}
+            BUILD_COMMAND ${OPENSSL_BUILD_COMMAND}
+            INSTALL_COMMAND ${OPENSSL_INSTALL_COMMAND}
+            DOWNLOAD_EXTRACT_TIMESTAMP 0
+            BUILD_BYPRODUCTS  <INSTALL_DIR>/include/openssl/openssl.h <INSTALL_DIR>/lib/libcrypto.so <INSTALL_DIR>/lib/libssl.so
+    )
+endif ()
 ExternalProject_Get_Property(openssl INSTALL_DIR)
-
-add_library(OpenSSL::Crypto SHARED IMPORTED GLOBAL)
-add_library(OpenSSL::SSL SHARED IMPORTED GLOBAL)
+ExternalProject_Get_Property(openssl SOURCE_DIR)
 
 
-add_dependencies(OpenSSL::Crypto openssl)
-add_dependencies(OpenSSL::SSL openssl)
+message(WARNING "Generating headers due to CMake and Ninja build system limitations in External build prioritization")
+set(openssl_configure_flags
+        ./Configure
+        ${OPENSSL_TARGET}
+        --prefix=${CMAKE_CURRENT_SOURCE_DIR}/build
+        -D__ANDROID_API__=${ANDROID_NATIVE_API_LEVEL}
+        -fPIC shared no-ui no-ui-console no-engine no-filenames)
+build_autoconf_external_project(openssl "${OPENSSL_SOURCE_DIR}" "" "${openssl_configure_flags}" "build_generated" "build_generated" "" )
+set(SUPER_BUILD_INCLUDE "${CMAKE_CURRENT_SOURCE_DIR}/build/include")
+file(COPY "${SUPER_BUILD_DIR}/include" DESTINATION "${SUPER_BUILD_INCLUDE}/..")
+#message(FATAL_ERROR "COPY ${SUPER_BUILD_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/build/include")
+
+
+set(OPENSSL_CRYPTO_LIBRARY "${INSTALL_DIR}/lib/libcrypto.so")
+set(OPENSSL_SSL_LIBRARY "${INSTALL_DIR}/lib/libssl.so")
+# Ninja does not respect byproducts with headers. It behaves like they already there
+set(OPENSSL_INCLUDE_DIR "${SUPER_BUILD_INCLUDE};${INSTALL_DIR}/include")
+set(OPENSSL_INSTALL_PREFIX "${CMAKE_CURRENT_BINARY_DIR}/openssl")
 
 file(MAKE_DIRECTORY ${INSTALL_DIR}/include)
+#file(MAKE_DIRECTORY ${INSTALL_DIR}/lib)
 
+set (OPENSSL_DIR ${INSTALL_DIR} PARENT_SCOPE)
+
+add_library(OpenSSL::Crypto UNKNOWN IMPORTED)
+add_dependencies(OpenSSL::Crypto openssl)
 set_target_properties(OpenSSL::Crypto PROPERTIES
-    IMPORTED_LOCATION "${INSTALL_DIR}/lib/libcrypto.so"
-    INTERFACE_INCLUDE_DIRECTORIES "${INSTALL_DIR}/include"
+        IMPORTED_LINK_INTERFACE_LANGUAGES "C"
+        INTERFACE_INCLUDE_DIRECTORIES "${SOURCE_DIR}/include;${INSTALL_DIR}/include"
+        IMPORTED_LOCATION "${INSTALL_DIR}/lib/libcrypto.so")
+
+add_library( OpenSSL::SSL UNKNOWN IMPORTED)
+add_dependencies( OpenSSL::SSL openssl)
+set_target_properties(OpenSSL::SSL PROPERTIES
+        IMPORTED_LINK_INTERFACE_LANGUAGES "C"
+        #INTERFACE_INCLUDE_DIRECTORIES "${INSTALL_DIR}/include"
+        INTERFACE_INCLUDE_DIRECTORIES "${SOURCE_DIR}/include"
+        IMPORTED_LOCATION "${INSTALL_DIR}/lib/libssl.so")
+
+include(FindPackageHandleStandardArgs)
+find_package_handle_standard_args(OpenSSL
+        REQUIRED_VARS OPENSSL_SSL_LIBRARY OPENSSL_CRYPTO_LIBRARY OPENSSL_INCLUDE_DIR
 )
 
-set_target_properties(OpenSSL::SSL PROPERTIES
-    IMPORTED_LOCATION "${INSTALL_DIR}/lib/libssl.so"
-    INTERFACE_INCLUDE_DIRECTORIES "${INSTALL_DIR}/include"
-    INTERFACE_LINK_LIBRARIES OpenSSL::Crypto
+
+
+
+
+#[[function(get_current_stack_targets output_var)
+    get_property(targets DIRECTORY PROPERTY BUILDSYSTEM_TARGETS)
+    set(${output_var} ${targets} PARENT_SCOPE)
+endfunction()
+
+function(add_dependency_to_stack_targets )
+    get_current_stack_targets(TARGETS)
+    foreach(target ${TARGETS})
+        if ("${target}" STREQUAL "openssl")
+            message(FATAL_ERROR "Something wrong happened. Cannot add target openssl to openssl target\nSTACK:${stack}\n")
+        endif()
+        target_link_libraries(${target} PRIVATE  OpenSSL::Crypto)
+        add_dependencies(${target} OpenSSL::Crypto)
+    endforeach()
+endfunction()
+
+function(watch_deprecated_stack_usage var access value current_list_file stack)
+    if(access STREQUAL "READ_ACCESS")
+        message(DEPRECATION "The variable '${var}' is deprecated! Use OpenSSL::Crypto")
+        add_dependency_to_stack_targets(${stack})
+    endif()
+endfunction()
+variable_watch(OPENSSL_CRYPTO_LIBRARY watch_deprecated_stack_usage)
+
+add_custom_command(
+        OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/external/include/header1.h
+        COMMAND ${CMAKE_COMMAND} --build . --target MyExternalProject
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )
-include_directories(${INSTALL_DIR}/include)
-list(APPEND CMAKE_PREFIX_PATH ${INSTALL_DIR})
+add_custom_target(GenerateHeaders DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/external/include/header1.h)
+add_dependencies(MyMainProject GenerateHeaders)]]

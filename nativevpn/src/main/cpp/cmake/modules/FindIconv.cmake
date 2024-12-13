@@ -1,4 +1,7 @@
 include(ExternalProject)
+if(TARGET iconv)
+    return()
+endif ()
 set(ICONV_VERSION        $ENV{ICONV_VERSION})
 set(ICONV_SHA            $ENV{ICONV_SHA})
 
@@ -16,9 +19,9 @@ set(CONFIGURE_COMMAND
     ${CMAKE_COMMAND} -E env ${android_env} "<SOURCE_DIR>/configure" ${configure_flags}
                             "--prefix=<INSTALL_DIR>")
 set(BUILD_COMMAND
-    ${CMAKE_COMMAND} -E env ${android_env} $(MAKE) -sC "<SOURCE_DIR>" install)
+    ${CMAKE_COMMAND} -E env ${android_env} make -j${NPROC} -sC "<SOURCE_DIR>" install)
 set(INSTALL_COMMAND
-    ${CMAKE_COMMAND} -E env ${android_env} $(MAKE) -sC "<SOURCE_DIR>" install)
+    ${CMAKE_COMMAND} -E env ${android_env} make -j${NPROC} -sC "<SOURCE_DIR>" install)
 
 if(DEFINED ICONV_SOURCE_DIR AND EXISTS ${ICONV_SOURCE_DIR})
     ExternalProject_Add(libiconv
@@ -28,6 +31,7 @@ if(DEFINED ICONV_SOURCE_DIR AND EXISTS ${ICONV_SOURCE_DIR})
         BUILD_COMMAND ${BUILD_COMMAND}
         INSTALL_COMMAND ${INSTALL_COMMAND}
         DOWNLOAD_COMMAND ""
+            BUILD_BYPRODUCTS  <INSTALL_DIR>/lib/libiconv.so
     )
 else()
     ExternalProject_Add(libiconv
@@ -38,25 +42,39 @@ else()
         BUILD_COMMAND ${BUILD_COMMAND}
         INSTALL_COMMAND ${INSTALL_COMMAND}
         DOWNLOAD_EXTRACT_TIMESTAMP 0
+            BUILD_BYPRODUCTS <INSTALL_DIR>/lib/libiconv.so
     )
 endif()
 ExternalProject_Get_Property(libiconv INSTALL_DIR)
+ExternalProject_Get_Property(libiconv SOURCE_DIR)
 list(APPEND CMAKE_PREFIX_PATH ${INSTALL_DIR})
 
+file(MAKE_DIRECTORY ${INSTALL_DIR}/include)
+file(MAKE_DIRECTORY ${INSTALL_DIR}/lib)
 # Set the variables
-set(ICONV_INCLUDE_DIR ${INSTALL_DIR}/include)
+set(ICONV_INCLUDE_DIR ${SOURCE_DIR}/include)
 set(ICONV_LIBRARY ${INSTALL_DIR}/lib/libiconv.so)
-set(ICONV_FOUND TRUE)
+set(LIB_ICONV ${INSTALL_DIR}/lib/libiconv.so)
 
-# Create an imported target for libiconv
-add_library(Iconv SHARED IMPORTED GLOBAL)
-set_target_properties(Iconv PROPERTIES
-    IMPORTED_LOCATION ${INSTALL_DIR}/lib/libiconv.so
-    INTERFACE_INCLUDE_DIRECTORIES ${INSTALL_DIR}/include
+
+add_library(iconv UNKNOWN IMPORTED)
+add_dependencies(iconv libiconv)
+set_target_properties(iconv PROPERTIES
+        IMPORTED_LINK_INTERFACE_LANGUAGES "C"
+        INTERFACE_INCLUDE_DIRECTORIES "${ICONV_INCLUDE_DIR};${INSTALL_DIR}/include"
+        IMPORTED_LOCATION "${INSTALL_DIR}/lib/libsodium.so")
+
+include(FindPackageHandleStandardArgs)
+find_package_handle_standard_args(Iconv
+        REQUIRED_VARS ICONV_INCLUDE_DIR ICONV_LIBRARY
 )
+
+
+include_directories(${INSTALL_DIR}/include)
 
 # Export variables for find_package compatibility
 set(Iconv_INCLUDE_DIRS ${ICONV_INCLUDE_DIR})
 set(Iconv_LIBRARIES ${ICONV_LIBRARY})
 set(Iconv_FOUND ${ICONV_FOUND})
-include_directories(${INSTALL_DIR}/include)
+
+

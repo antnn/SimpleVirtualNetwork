@@ -1,4 +1,7 @@
 include(ExternalProject)
+if(SODIUM_FOUND OR TARGET sodium)
+  return()
+endif ()
 set(SODIUM_SHA           $ENV{SODIUM_SHA})
 set(SODIUM_VERSION       $ENV{SODIUM_VERSION})
 
@@ -8,7 +11,6 @@ get_autoconf_target(AUTOCONF_TARGET)
 
 set(configure_flags
         --host=${AUTOCONF_TARGET})
-
 
 if(ANDROID_ABI STREQUAL "arm64-v8a")
         list(APPEND configure_command ${configure_command} CFLAGS=-march=armv8-a+crypto+aes)
@@ -20,9 +22,9 @@ set(CONFIGURE_COMMAND
     ${CMAKE_COMMAND} -E env ${android_env} "<SOURCE_DIR>/configure" ${configure_flags}
                             "--prefix=<INSTALL_DIR>")
   set(BUILD_COMMAND
-    ${CMAKE_COMMAND} -E env ${android_env} $(MAKE) -sC "<SOURCE_DIR>" install)
+    ${CMAKE_COMMAND} -E env ${android_env} make -j${NPROC} -sC "<SOURCE_DIR>" install)
   set(INSTALL_COMMAND
-    ${CMAKE_COMMAND} -E env ${android_env} $(MAKE) -sC "<SOURCE_DIR>" install)
+    ${CMAKE_COMMAND} -E env ${android_env} make -j${NPROC} -sC "<SOURCE_DIR>" install)
 
 
 if(DEFINED SODIUM_SOURCE_DIR AND EXISTS ${SODIUM_SOURCE_DIR})
@@ -33,6 +35,7 @@ if(DEFINED SODIUM_SOURCE_DIR AND EXISTS ${SODIUM_SOURCE_DIR})
         BUILD_COMMAND ${BUILD_COMMAND}
         INSTALL_COMMAND ${INSTALL_COMMAND}
         DOWNLOAD_COMMAND ""
+          BUILD_BYPRODUCTS <INSTALL_DIR>/lib/libsodium.so
     )
 else()
   ExternalProject_Add(libsodium
@@ -43,24 +46,33 @@ else()
     BUILD_COMMAND ${BUILD_COMMAND}
     INSTALL_COMMAND ${INSTALL_COMMAND}
     DOWNLOAD_EXTRACT_TIMESTAMP 0
+          BUILD_BYPRODUCTS <INSTALL_DIR>/lib/libsodium.so
 )
 endif()
 ExternalProject_Get_Property(libsodium INSTALL_DIR)
-list(APPEND CMAKE_PREFIX_PATH ${INSTALL_DIR})
+ExternalProject_Get_Property(libsodium SOURCE_DIR)
 
-set(LIBSODIUM_INCLUDE_DIR ${INSTALL_DIR}/include)
-set(LIBSODIUM_LIBRARY ${INSTALL_DIR}/lib/libsodium.so)
-set(LIBSODIUM_FOUND TRUE)
+file(MAKE_DIRECTORY ${INSTALL_DIR}/include)
 
-# Set both SODIUM_LIBRARIES and SODIUM_LINK_LIBRARIES
+#for pkg_search_module
+set(SODIUM_INCLUDE_DIRS ${SOURCE_DIR}/src/libsodium/include;${INSTALL_DIR}/include)
 set(SODIUM_LIBRARIES ${INSTALL_DIR}/lib/libsodium.so)
 set(SODIUM_LINK_LIBRARIES ${INSTALL_DIR}/lib/libsodium.so)
 
-# Create an imported target for libsodium
-add_library(sodium SHARED IMPORTED GLOBAL)
+
+add_library( sodium UNKNOWN IMPORTED)
+add_dependencies( sodium libsodium)
 set_target_properties(sodium PROPERTIES
-    IMPORTED_LOCATION ${INSTALL_DIR}/lib/libsodium.so
-    INTERFACE_INCLUDE_DIRECTORIES ${INSTALL_DIR}/include
+        IMPORTED_LINK_INTERFACE_LANGUAGES "C"
+        INTERFACE_INCLUDE_DIRECTORIES "${SOURCE_DIR}/src/libsodium/include;${INSTALL_DIR}/include"
+        IMPORTED_LOCATION "${INSTALL_DIR}/lib/libsodium.so")
+
+include(FindPackageHandleStandardArgs)
+find_package_handle_standard_args(Sodium
+        REQUIRED_VARS SODIUM_INCLUDE_DIRS SODIUM_LIBRARIES
 )
 
-include_directories(${INSTALL_DIR}/include)
+
+
+
+
