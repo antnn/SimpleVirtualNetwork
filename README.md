@@ -1,3 +1,4 @@
+# Clone and open in Android Studio OR
 # Install SDK
 ```bash
 apt-get update && apt-get install -y \
