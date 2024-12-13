@@ -87,7 +87,7 @@ function(build_autoconf_external_project project source_dir env configure_cmd bu
             -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
             -B${CMAKE_CURRENT_BINARY_DIR}/${project}
             #-DCMAKE_C_FLAGS="${CMAKE_C_FLAGS}"
-            -GNinja
+            -G${CMAKE_GENERATOR}
     )
 
     set(AUTOCONF_CURRENT_BUILD_DIR "${CMAKE_CURRENT_BINARY_DIR}/${project}")
