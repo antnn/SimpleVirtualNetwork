@@ -87,7 +87,7 @@ target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE
         log
         OpenSSL::SSL
         OpenSSL::Crypto
-        $<IF:$<BOOL:SODIUM_LINK_LIBRARIES>,${SODIUM_LINK_LIBRARIES},${SODIUM_LIBRARIES}>
+        sodium
         iconv
         mayaqua
         cedar
