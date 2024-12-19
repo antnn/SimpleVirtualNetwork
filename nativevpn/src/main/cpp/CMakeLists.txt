@@ -59,9 +59,9 @@ if(NOT git_result EQUAL "0")
     #message(FATAL_ERROR "git apply patch")
 endif()
 
-set(CURSES_FOUND TRUE CACHE BOOL "Curses found" FORCE)
-set(CURSES_LIBRARY "" CACHE STRING "Curses library" FORCE)
-set(CURSES_INCLUDE_PATH "" CACHE STRING "Curses include path" FORCE)
+set(CURSES_FOUND TRUE)
+set(CURSES_LIBRARY " " )
+set(CURSES_INCLUDE_PATH " ")
 
 
 list(APPEND CMAKE_MODULE_PATH "${SOFTETHERVPN_SOURCE_DIR}/src/Mayaqua/3rdparty")
