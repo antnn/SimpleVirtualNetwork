@@ -45,6 +45,7 @@ android {
                 //arguments("-DCMAKE_C_FLAGS=-I${project.projectDir.absolutePath}/src/main/cpp/include" )
             }
         }
+        targetSdk = 35
     }
 
 

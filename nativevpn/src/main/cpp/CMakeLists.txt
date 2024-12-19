@@ -70,7 +70,7 @@ set(CMAKE_VERBOSE_MAKEFILE ON)
 
 cmake_host_system_information(RESULT nproc
         QUERY NUMBER_OF_PHYSICAL_CORES)
-set(NPROC ${nproc} CACHE INTERNAL "")
+set(NPROC ${nproc})
 
 
 add_library(androidhelpers INTERFACE)

@@ -5,7 +5,7 @@ plugins {
 
 android {
     namespace = "ru.valishin.vpnoverhttps"
-    compileSdk = 34
+    compileSdk = 35
     packaging {
         jniLibs {
             useLegacyPackaging = true
@@ -15,7 +15,7 @@ android {
     defaultConfig {
         applicationId = "ru.valishin.vpnoverhttps"
         minSdk = 24
-        targetSdk = 34
+        targetSdk = 35
         versionCode = 1
         versionName = "1.0"
 
