@@ -77,7 +77,8 @@ ExternalProject_Get_Property(openssl SOURCE_DIR)
 set(OPENSSL_CRYPTO_LIBRARY "${INSTALL_DIR}/lib/libcrypto.so")
 set(OPENSSL_SSL_LIBRARY "${INSTALL_DIR}/lib/libssl.so")
 
-message(WARNING "Generating headers due to CMake and Ninja build system limitations in External build prioritization")
+message(WARNING "Generating headers due to CMake and Ninja build system limitations in External build prioritization 
+https://discourse.cmake.org/t/design-cmake-projects-with-autocode-generators/9011/2")
 set(openssl_configure_flags
         ./Configure
         ${OPENSSL_TARGET}
